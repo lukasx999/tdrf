@@ -12,6 +12,8 @@
     return rad * (180.0 / M_PI);
 }
 
+// TODO: tests for math module
+
 struct Vec {
     float x = 0.0f;
     float y = 0.0f;
@@ -174,16 +176,26 @@ struct Mat {
     }
 
     constexpr Mat operator*(Mat other) const {
+
+        Vec row0 = get_row(0);
+        Vec row1 = get_row(1);
+        Vec row2 = get_row(2);
+        Vec row3 = get_row(3);
+
         return {
-            // Vec { m[0][0] },
+            Vec {row0 * other.m[0], row0 * other.m[1], row0 * other.m[2], row0 * other.m[3] },
+            Vec {row1 * other.m[0], row1 * other.m[1], row1 * other.m[2], row1 * other.m[3] },
+            Vec {row2 * other.m[0], row2 * other.m[1], row2 * other.m[2], row2 * other.m[3] },
+            Vec {row3 * other.m[0], row3 * other.m[1], row3 * other.m[2], row3 * other.m[3] },
         };
     }
 
     [[nodiscard]] constexpr Vec operator*(Vec v) const {
-        Vec row0 { m[0][0], m[1][0], m[2][0], m[3][0] };
-        Vec row1 { m[0][1], m[1][1], m[2][1], m[3][1] };
-        Vec row2 { m[0][2], m[1][2], m[2][2], m[3][2] };
-        Vec row3 { m[0][3], m[1][3], m[2][3], m[3][3] };
+
+        Vec row0 = get_row(0);
+        Vec row1 = get_row(1);
+        Vec row2 = get_row(2);
+        Vec row3 = get_row(3);
 
         return {
             row0 * v,
@@ -218,6 +230,11 @@ struct Mat {
             Vec { r.z*r.x*(1.0f-std::cos(a))-r.y*std::sin(a), r.z*r.y*(1.0f-std::cos(a))+r.x*std::sin(a), std::cos(a)+std::pow(r.z, 2.0f)*(1.0f-std::cos(a)) },
             Vec { 0.0f, 0.0f, 0.0f, 1.0f },
         };
+    }
+
+    // returns the nth row as a vector
+    [[nodiscard]] constexpr Vec get_row(int n) const {
+        return { m[0][n], m[1][n], m[2][n], m[3][n] };
     }
 
 };
