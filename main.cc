@@ -8,52 +8,7 @@ namespace rl {
 #include <raylib.h>
 }
 
-struct Vec {
-    int x = 0;
-    int y = 0;
-    int z = 0;
-
-    constexpr Vec operator*(int value) const {
-        return {
-            x * value,
-            y * value,
-            z * value,
-        };
-    }
-
-    constexpr Vec operator+(Vec other) const {
-        return {
-            x + other.x,
-            y + other.y,
-            z + other.z,
-        };
-    }
-
-    [[nodiscard]] constexpr Vec rotated(float angle_deg) const {
-
-        Vec result;
-
-        float cos_ = std::cosf(deg_to_rad(angle_deg));
-        float sin_ = std::sinf(deg_to_rad(angle_deg));
-
-        result.x = cos_ * x - sin_ * y;
-        result.y = sin_ * x + cos_ * y;
-
-        return result;
-    }
-
-    constexpr void rotate(float angle_deg) {
-        Vec v = rotated(angle_deg);
-        x = v.x;
-        y = v.y;
-    }
-
-private:
-    [[nodiscard]] static constexpr float deg_to_rad(float deg) {
-        return deg * (M_PI / 180.0);
-    }
-
-};
+#include "math.h"
 
 struct Color {
     uint8_t r = 0;
@@ -98,9 +53,10 @@ public:
 
     void draw_triangle(Vec a, Vec b, Vec c, Color color) {
 
+        // TODO: only check bounding box of triangle
         for (int x = 0; x < m_color_buffer.get_width(); ++x) {
             for (int y = 0; y < m_color_buffer.get_height(); ++y) {
-                Vec p {x, y};
+                Vec p { static_cast<float>(x), static_cast<float>(y), 0.0f, 1.0f };
 
                 int abp = edge_function(a, b, p);
                 int bcp = edge_function(b, c, p);
@@ -108,6 +64,7 @@ public:
 
                 bool wireframe = false;
                 if (wireframe) {
+                    // TODO: thicker wireframe lines
                     if (abp == 0 && bcp == 0 && cap == 0) {
                         m_color_buffer.write(x, y, color);
                     }
@@ -131,7 +88,8 @@ public:
     }
 
 private:
-    [[nodiscard]] static constexpr int edge_function(Vec a, Vec b, Vec c) {
+    // returns the area of a triangle, which may be negative
+    [[nodiscard]] static constexpr float edge_function(Vec a, Vec b, Vec c) {
         return (b.x-a.x)*(c.y-a.y) - (b.y-a.y)*(c.x-a.x);
     }
 
@@ -150,8 +108,6 @@ struct Face {
 struct Cube {
     std::array<Face, 6> faces;
 };
-
-// TODO: fix vector rotation in 3d space
 
 int main() {
 
@@ -199,19 +155,20 @@ int main() {
 
     for (auto& face : cube.faces) {
         for (auto& t : face.triangles) {
-            // t.a.rotate(1);
-            // t.b.rotate(1);
-            // t.c.rotate(1);
+            auto rot_mat = Mat::rotate(Vec {1.0f, 1.0f, 0.0f, 1.0f}, deg_to_rad(25));
+            t.a = rot_mat * t.a;
+            t.b = rot_mat * t.b;
+            t.c = rot_mat * t.c;
         }
     }
 
     for (auto&& [face_nr, face] : cube.faces | std::views::enumerate) {
         for (auto& t : face.triangles) {
             auto color = face_color_map[face_nr];
-            int w = 200;
-            int h = 200;
-            int d = 200;
-            Vec offset {width/2-w/2, height/2-h/2};
+            float w = 200;
+            float h = 200;
+            float d = 200;
+            Vec offset {width/2.0f-w/2.0f, height/2.0f-h/2.0f};
             ras.draw_triangle(t.a*w+offset, t.b*h+offset, t.c*d+offset, color);
         }
     }
