@@ -16,6 +16,25 @@ struct Color {
     uint8_t g = 0;
     uint8_t b = 0;
     uint8_t a = 0xff;
+
+    constexpr Color operator*(float value) const {
+        return {
+            static_cast<uint8_t>(r * value),
+            static_cast<uint8_t>(g * value),
+            static_cast<uint8_t>(b * value),
+            static_cast<uint8_t>(a * value),
+        };
+    }
+
+    constexpr Color operator+(Color other) const {
+        return {
+            static_cast<uint8_t>(r + other.r),
+            static_cast<uint8_t>(g + other.g),
+            static_cast<uint8_t>(b + other.b),
+            static_cast<uint8_t>(a + other.a),
+        };
+    }
+
 };
 
 static_assert(sizeof(Color) == 4);
@@ -82,9 +101,18 @@ public:
             for (float y = 0; y < m_color_buffer.get_height(); ++y) {
                 Vec p { x, y, 0.0f, 1.0f };
 
+                int abc = edge_function(a, b, c);
                 int abp = edge_function(a, b, p);
                 int bcp = edge_function(b, c, p);
                 int cap = edge_function(c, a, p);
+
+                float factor_a = static_cast<float>(bcp) / abc;
+                float factor_b = static_cast<float>(cap) / abc;
+                float factor_c = static_cast<float>(abp) / abc;
+
+                Color c = Color(0xff, 0x0, 0x0, 0xff) * factor_a +
+                          Color(0x0, 0xff, 0x0, 0xff) * factor_b +
+                          Color(0x0, 0x0, 0xff, 0xff) * factor_c;
 
                 // float depth = a.z;
                 // float stored_depth = m_depth_buffer.get(x, y);
@@ -93,7 +121,7 @@ public:
 
                 if (abp > 0 && bcp > 0 && cap > 0) {
                     // m_depth_buffer.write(x, y, depth);
-                    m_color_buffer.write(x, y, color);
+                    m_color_buffer.write(x, y, c);
                 }
 
             }
@@ -129,8 +157,12 @@ int main() {
 
     Cube cube_copy(cube);
 
-    // ras.draw_triangle({0, 0, 0}, {width, 0, 0}, {width/2, height, 0}, Color(0xff, 0x0, 0x0, 0xff));
-    // ras.clear({0x0, 0x0, 0x0, 0xff});
+    ras.draw_triangle(
+        {0, 0, 0, 0},
+        {static_cast<float>(width), 0, 0, 0},
+        {width/2.0f, static_cast<float>(height), 0, 0},
+        Color(0xff, 0x0, 0x0, 0xff)
+    );
 
     for (auto& face : cube_copy.faces) {
         for (auto& t : face.triangles) {
@@ -141,16 +173,16 @@ int main() {
         }
     }
 
-    for (auto&& [face_nr, face] : cube_copy.faces | std::views::enumerate) {
-        for (auto& t : face.triangles) {
-            auto color = face_color_map[face_nr];
-            float w = 200;
-            float h = 200;
-            float d = 200;
-            Vec offset {width/2.0f-w/2.0f, height/2.0f-h/2.0f};
-            ras.draw_triangle(t.a*w+offset, t.b*h+offset, t.c*d+offset, color);
-        }
-    }
+    // for (auto&& [face_nr, face] : cube_copy.faces | std::views::enumerate) {
+    //     for (auto& t : face.triangles) {
+    //         auto color = face_color_map[face_nr];
+    //         float w = 200;
+    //         float h = 200;
+    //         float d = 200;
+    //         Vec offset {width/2.0f-w/2.0f, height/2.0f-h/2.0f};
+    //         ras.draw_triangle(t.a*w+offset, t.b*h+offset, t.c*d+offset, color);
+    //     }
+    // }
 
 
     rl::InitWindow(width, height, "ras");
