@@ -70,31 +70,32 @@ public:
     Rasterizer(ColorBuffer& color_buffer, DepthBuffer& depth_buffer)
         : m_color_buffer(color_buffer)
         , m_depth_buffer(depth_buffer)
-    { }
+    {
+        m_color_buffer.clear({0x0, 0x0, 0x0, 0xff});
+        m_depth_buffer.clear(0.0f);
+    }
 
     void draw_triangle(Vec a, Vec b, Vec c, Color color) {
 
         // TODO: only check bounding box of triangle
-        for (int x = 0; x < m_color_buffer.get_width(); ++x) {
-            for (int y = 0; y < m_color_buffer.get_height(); ++y) {
-                Vec p { static_cast<float>(x), static_cast<float>(y), 0.0f, 1.0f };
+        for (float x = 0; x < m_color_buffer.get_width(); ++x) {
+            for (float y = 0; y < m_color_buffer.get_height(); ++y) {
+                Vec p { x, y, 0.0f, 1.0f };
 
                 int abp = edge_function(a, b, p);
                 int bcp = edge_function(b, c, p);
                 int cap = edge_function(c, a, p);
 
-                bool wireframe = false;
-                if (wireframe) {
-                    // TODO: thicker wireframe lines
-                    if (abp == 0 && bcp == 0 && cap == 0) {
-                        m_color_buffer.write(x, y, color);
-                    }
+                // float depth = a.z;
+                // float stored_depth = m_depth_buffer.get(x, y);
+                //
+                // if (stored_depth > depth) continue;
 
-                } else {
-                    if (abp > 0 && bcp > 0 && cap > 0) {
-                        m_color_buffer.write(x, y, color);
-                    }
+                if (abp > 0 && bcp > 0 && cap > 0) {
+                    // m_depth_buffer.write(x, y, depth);
+                    m_color_buffer.write(x, y, color);
                 }
+
             }
         }
 
