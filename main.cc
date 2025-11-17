@@ -9,6 +9,7 @@ namespace rl {
 }
 
 #include "math.h"
+#include "aux.h"
 
 struct Color {
     uint8_t r = 0;
@@ -19,20 +20,33 @@ struct Color {
 
 static_assert(sizeof(Color) == 4);
 
-class ColorBuffer {
-    static constexpr int m_width = 900;
-    static constexpr int m_height = 900;
-    std::vector<Color> m_color_buffer{ m_width * m_height };
+template <typename T>
+class Buffer {
+    const int m_width;
+    const int m_height;
+    std::vector<T> m_buffer;
 
 public:
-    ColorBuffer() = default;
+    Buffer(int width, int height)
+        : m_width(width)
+        , m_height(height)
+        , m_buffer(m_width * m_height)
+    { }
 
-    void write(int x, int y, Color color) {
-        m_color_buffer[y * m_width + x] = color;
+    void write(int x, int y, T value) {
+        m_buffer[y * m_width + x] = value;
     }
 
-    [[nodiscard]] Color get(int x, int y) const {
-        return m_color_buffer[y * m_width + x];
+    [[nodiscard]] T get(int x, int y) const {
+        return m_buffer[y * m_width + x];
+    }
+
+    void clear(T value) {
+        for (int x = 0; x < get_width(); ++x) {
+            for (int y = 0; y < get_height(); ++y) {
+                write(x, y, value);
+            }
+        }
     }
 
     [[nodiscard]] int get_width() const {
@@ -45,11 +59,18 @@ public:
 
 };
 
+using ColorBuffer = Buffer<Color>;
+using DepthBuffer = Buffer<float>;
+
 class Rasterizer {
     ColorBuffer& m_color_buffer;
+    DepthBuffer& m_depth_buffer;
 
 public:
-    explicit Rasterizer(ColorBuffer& color_buffer) : m_color_buffer(color_buffer) { }
+    Rasterizer(ColorBuffer& color_buffer, DepthBuffer& depth_buffer)
+        : m_color_buffer(color_buffer)
+        , m_depth_buffer(depth_buffer)
+    { }
 
     void draw_triangle(Vec a, Vec b, Vec c, Color color) {
 
@@ -79,14 +100,6 @@ public:
 
     }
 
-    void clear(Color color) {
-        for (int x = 0; x < m_color_buffer.get_width(); ++x) {
-            for (int y = 0; y < m_color_buffer.get_height(); ++y) {
-                m_color_buffer.write(x, y, color);
-            }
-        }
-    }
-
 private:
     // returns the area of a triangle, which may be negative
     [[nodiscard]] static constexpr float edge_function(Vec a, Vec b, Vec c) {
@@ -95,52 +108,12 @@ private:
 
 };
 
-struct Triangle {
-    Vec a;
-    Vec b;
-    Vec c;
-};
-
-struct Face {
-    std::array<Triangle, 2> triangles;
-};
-
-struct Cube {
-    std::array<Face, 6> faces;
-};
 
 int main() {
 
-    Cube cube {
-        Face {
-            Triangle { Vec(0.0f, 0.0f, 0.0f), Vec(1.0f, 0.0f, 0.0f), Vec(1.0f, 1.0f, 0.0f) },
-            Triangle { Vec(1.0f, 1.0f, 0.0f), Vec(0.0f, 1.0f, 0.0f), Vec(0.0f, 0.0f, 0.0f) },
-        },
-        Face {
-            Triangle { Vec(0.0f, 0.0f, 1.0f), Vec(1.0f, 0.0f, 1.0f), Vec(1.0f, 1.0f, 1.0f) },
-            Triangle { Vec(1.0f, 1.0f, 1.0f), Vec(0.0f, 1.0f, 1.0f), Vec(0.0f, 0.0f, 1.0f) },
-        },
-        Face {
-            Triangle { Vec(0.0f, 1.0f, 1.0f), Vec(0.0f, 1.0f, 0.0f), Vec(0.0f, 0.0f, 0.0f) },
-            Triangle { Vec(0.0f, 0.0f, 0.0f), Vec(0.0f, 0.0f, 1.0f), Vec(0.0f, 1.0f, 1.0f) },
-        },
-        Face {
-            Triangle { Vec(1.0f, 1.0f, 1.0f), Vec(1.0f, 1.0f, 0.0f), Vec(1.0f, 0.0f, 0.0f) },
-            Triangle { Vec(1.0f, 0.0f, 0.0f), Vec(1.0f, 0.0f, 1.0f), Vec(1.0f, 1.0f, 1.0f) },
-        },
-        Face {
-            Triangle { Vec(0.0f, 0.0f, 0.0f), Vec(1.0f, 0.0f, 0.0f), Vec(1.0f, 0.0f, 1.0f) },
-            Triangle { Vec(1.0f, 0.0f, 1.0f), Vec(0.0f, 0.0f, 1.0f), Vec(0.0f, 0.0f, 0.0f) },
-        },
-        Face {
-            Triangle { Vec(0.0f, 1.0f, 0.0f), Vec(1.0f, 1.0f, 0.0f), Vec(1.0f, 1.0f, 1.0f) },
-            Triangle { Vec(1.0f, 1.0f, 1.0f), Vec(0.0f, 1.0f, 1.0f), Vec(0.0f, 1.0f, 0.0f) },
-        },
-    };
-
-
-    ColorBuffer color_buffer;
-    Rasterizer ras(color_buffer);
+    ColorBuffer color_buffer(1600, 900);
+    DepthBuffer depth_buffer(1600, 900);
+    Rasterizer ras(color_buffer, depth_buffer);
     int width = color_buffer.get_width();
     int height = color_buffer.get_height();
 
@@ -153,16 +126,21 @@ int main() {
         Color(0x0, 0x0, 0x7f, 0xff),
     };
 
-    for (auto& face : cube.faces) {
+    Cube cube_copy(cube);
+
+    // ras.draw_triangle({0, 0, 0}, {width, 0, 0}, {width/2, height, 0}, Color(0xff, 0x0, 0x0, 0xff));
+    // ras.clear({0x0, 0x0, 0x0, 0xff});
+
+    for (auto& face : cube_copy.faces) {
         for (auto& t : face.triangles) {
-            auto rot_mat = Mat::rotate(Vec {1.0f, 1.0f, 0.0f, 1.0f}, deg_to_rad(25));
+            auto rot_mat = Mat::rotate(Vec {1.0f, 1.0f, 0.0f, 1.0f}, deg_to_rad(15));
             t.a = rot_mat * t.a;
             t.b = rot_mat * t.b;
             t.c = rot_mat * t.c;
         }
     }
 
-    for (auto&& [face_nr, face] : cube.faces | std::views::enumerate) {
+    for (auto&& [face_nr, face] : cube_copy.faces | std::views::enumerate) {
         for (auto& t : face.triangles) {
             auto color = face_color_map[face_nr];
             float w = 200;
@@ -173,13 +151,15 @@ int main() {
         }
     }
 
-    // ras.draw_triangle({0, 0, 0}, {width, 0, 0}, {width/2, height, 0}, Color(0xff, 0x0, 0x0, 0xff));
 
     rl::InitWindow(width, height, "ras");
 
     while (!rl::WindowShouldClose()) {
         rl::BeginDrawing();
         rl::ClearBackground(rl::BLACK);
+
+
+
 
         for (int x = 0; x < width; ++x) {
             for (int y = 0; y < height; ++y) {
