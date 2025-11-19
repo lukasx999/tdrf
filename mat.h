@@ -112,10 +112,10 @@ struct Mat {
 
     [[nodiscard]] static constexpr Mat translate(Vec v) {
         return {
-            Vec { 0, 0, 0, v.x },
-            Vec { 0, 0, 0, v.y },
-            Vec { 0, 0, 0, v.z },
-            Vec { 0, 0, 0, 1 },
+            Vec { 1.0f, 0.0f, 0.0f, 0.0f },
+            Vec { 0.0f, 1.0f, 0.0f, 0.0f },
+            Vec { 0.0f, 0.0f, 1.0f, 0.0f },
+            Vec { v.x, v.y, v.z, 1.0f },
         };
     }
 

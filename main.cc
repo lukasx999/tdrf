@@ -168,22 +168,18 @@ int main() {
         ras.clear();
 
         for (auto&& [t, t_clone] : std::views::zip(teapot_triangles, teapot_triangles_clone)) {
-            Vec offset {width/2.0f, height/2.0f};
             float scale = 30;
-            // t.a.y *= -1;
-            // t.b.y *= -1;
-            // t.c.y *= -1;
 
-            auto rot_mat = Mat::rotate(Vec {1.0f, 1.0f, 0.0f, 1.0f}, deg_to_rad(rl::GetTime()*20));
-            t.a = rot_mat * t_clone.a;
-            t.b = rot_mat * t_clone.b;
-            t.c = rot_mat * t_clone.c;
+            // TODO: fix matrix translation
+            auto rot_mat = Mat::rotate({1.0f, 0.0f, 0.0f, 1.0f}, deg_to_rad(rl::GetTime()*50));
+            auto scale_mat = Mat::scale({scale, scale, scale, 1.0f});
+            auto transf_mat = Mat::translate({width/2.0f, height/2.0f, 0.0f, 1.0f});
+            auto mat = transf_mat * scale_mat * rot_mat;
+            t.a = mat * t_clone.a;
+            t.b = mat * t_clone.b;
+            t.c = mat * t_clone.c;
 
-            t.a *= 2;
-            t.b *= 2;
-            t.c *= 2;
-
-            ras.draw_triangle(t.a*scale+offset, t.b*scale+offset, t.c*scale+offset, Color::blue());
+            ras.draw_triangle(t.a, t.b, t.c, Color::blue());
         }
 
         for (int y = 0; y < height; ++y) {
