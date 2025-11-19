@@ -1,5 +1,6 @@
 #include <cmath>
 #include <print>
+#include <fstream>
 #include <vector>
 #include <ranges>
 #include <array>
@@ -13,6 +14,25 @@ namespace rl {
 #include "aux.h"
 
 // TODO: wavefront obj loader
+
+void write_to_ppm(const char* filename, const ColorBuffer& color_buffer) {
+    std::ofstream file(filename);
+
+    file << "P6" << ' ';
+    file << color_buffer.get_width() << ' ';
+    file << color_buffer.get_height() << ' ';
+    file << 0xff << '\n';
+
+    for (int y = 0; y < color_buffer.get_height(); ++y) {
+        for (int x = 0; x < color_buffer.get_width(); ++x) {
+            auto color = color_buffer.get(x, y);
+            file.write(reinterpret_cast<const char*>(&color.r), 1);
+            file.write(reinterpret_cast<const char*>(&color.g), 1);
+            file.write(reinterpret_cast<const char*>(&color.b), 1);
+        }
+    }
+
+}
 
 int main() {
 
@@ -70,6 +90,8 @@ int main() {
             ras.draw_triangle(t.a*w+offset, t.b*h+offset, t.c*d+offset, color);
         }
     }
+
+    write_to_ppm("out.ppm", color_buffer);
 
     rl::InitWindow(width, height, "ras");
 
