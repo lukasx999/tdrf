@@ -48,6 +48,14 @@ struct Vec {
         };
     }
 
+    constexpr Vec& operator*=(float value) {
+        x *= value;
+        y *= value;
+        z *= value;
+        w *= value;
+        return *this;
+    }
+
     constexpr Vec operator+(Vec other) const {
         return {
             x + other.x,

@@ -1,6 +1,8 @@
 #pragma once
 
 #include <cstdint>
+#include <cassert>
+#include <print>
 #include <vector>
 
 #include "math.h"
@@ -21,6 +23,14 @@ struct Color {
 
     [[nodiscard]] static constexpr Color green() {
         return {0x0, 0xff, 0x0, 0xff};
+    }
+
+    [[nodiscard]] static constexpr Color black() {
+        return {0x0, 0x0, 0x0, 0xff};
+    }
+
+    [[nodiscard]] static constexpr Color white() {
+        return {0xff, 0xff, 0xff, 0xff};
     }
 
     constexpr Color operator*(float value) const {
@@ -96,15 +106,26 @@ public:
         : m_color_buffer(color_buffer)
         , m_depth_buffer(depth_buffer)
     {
-        m_color_buffer.clear({0x0, 0x0, 0x0, 0xff});
+        clear();
+    }
+
+    void clear() {
+        m_color_buffer.clear(Color::black());
         m_depth_buffer.clear(-std::numeric_limits<float>::max());
     }
 
     void draw_triangle(Vec a, Vec b, Vec c, Color color) {
 
-        // TODO: only check bounding box of triangle
-        for (float x = 0; x < m_color_buffer.get_width(); ++x) {
-            for (float y = 0; y < m_color_buffer.get_height(); ++y) {
+        float aabb_x = std::min({a.x, b.x, c.x});
+        float aabb_y = std::min({a.y, b.y, c.y});
+        float aabb_width = std::max({a.x, b.x, c.x});
+        float aabb_height = std::max({a.y, b.y, c.y});
+
+        assert(aabb_width < m_color_buffer.get_width());
+        assert(aabb_height < m_color_buffer.get_height());
+
+        for (float x = aabb_x; x < aabb_width; ++x) {
+            for (float y = aabb_y; y < aabb_height; ++y) {
                 Vec p { x, y, 0.0f, 1.0f };
 
                 int abc = edge_function(a, b, c);
@@ -124,8 +145,6 @@ public:
                             Color::green() * weight_b +
                             Color::blue()  * weight_c;
 
-                // color = Color(depth, 1-depth, 1-depth, 0xff);
-
                 float stored_depth = m_depth_buffer.get(x, y);
 
                 // TODO: wireframe mode
@@ -133,9 +152,13 @@ public:
 
                 if (depth < stored_depth) continue;
 
+                bool show_aabb = false;
+
                 if (abp >= 0 && bcp >= 0 && cap >= 0) {
-                    m_color_buffer.write(x, y, color);
+                    m_color_buffer.write(x, y, col);
                     m_depth_buffer.write(x, y, depth);
+                } else if (show_aabb) {
+                    m_color_buffer.write(x, y, Color::red());
                 }
 
             }

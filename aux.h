@@ -18,27 +18,27 @@ struct Cube {
 
 inline constexpr Cube cube {
     Face {
-        Triangle { Vec(0.0f, 0.0f, 0.0f), Vec(1.0f, 0.0f, 0.0f), Vec(1.0f, 1.0f, 0.0f) },
-        Triangle { Vec(1.0f, 1.0f, 0.0f), Vec(0.0f, 1.0f, 0.0f), Vec(0.0f, 0.0f, 0.0f) },
+        Triangle { Vec(0.0f, 0.0f, 0.0f, 1.0f), Vec(1.0f, 0.0f, 0.0f, 1.0f), Vec(1.0f, 1.0f, 0.0f, 1.0f) },
+        Triangle { Vec(1.0f, 1.0f, 0.0f, 1.0f), Vec(0.0f, 1.0f, 0.0f, 1.0f), Vec(0.0f, 0.0f, 0.0f, 1.0f) },
     },
     Face {
-        Triangle { Vec(0.0f, 0.0f, 1.0f), Vec(1.0f, 0.0f, 1.0f), Vec(1.0f, 1.0f, 1.0f) },
-        Triangle { Vec(1.0f, 1.0f, 1.0f), Vec(0.0f, 1.0f, 1.0f), Vec(0.0f, 0.0f, 1.0f) },
+        Triangle { Vec(0.0f, 0.0f, 1.0f, 1.0f), Vec(1.0f, 0.0f, 1.0f, 1.0f), Vec(1.0f, 1.0f, 1.0f, 1.0f) },
+        Triangle { Vec(1.0f, 1.0f, 1.0f, 1.0f), Vec(0.0f, 1.0f, 1.0f, 1.0f), Vec(0.0f, 0.0f, 1.0f, 1.0f) },
     },
     Face {
-        Triangle { Vec(0.0f, 1.0f, 1.0f), Vec(0.0f, 1.0f, 0.0f), Vec(0.0f, 0.0f, 0.0f) },
-        Triangle { Vec(0.0f, 0.0f, 0.0f), Vec(0.0f, 0.0f, 1.0f), Vec(0.0f, 1.0f, 1.0f) },
+        Triangle { Vec(0.0f, 1.0f, 1.0f, 1.0f), Vec(0.0f, 1.0f, 0.0f, 1.0f), Vec(0.0f, 0.0f, 0.0f, 1.0f) },
+        Triangle { Vec(0.0f, 0.0f, 0.0f, 1.0f), Vec(0.0f, 0.0f, 1.0f, 1.0f), Vec(0.0f, 1.0f, 1.0f, 1.0f) },
     },
     Face {
-        Triangle { Vec(1.0f, 1.0f, 1.0f), Vec(1.0f, 1.0f, 0.0f), Vec(1.0f, 0.0f, 0.0f) },
-        Triangle { Vec(1.0f, 0.0f, 0.0f), Vec(1.0f, 0.0f, 1.0f), Vec(1.0f, 1.0f, 1.0f) },
+        Triangle { Vec(1.0f, 1.0f, 1.0f, 1.0f), Vec(1.0f, 1.0f, 0.0f, 1.0f), Vec(1.0f, 0.0f, 0.0f, 1.0f) },
+        Triangle { Vec(1.0f, 0.0f, 0.0f, 1.0f), Vec(1.0f, 0.0f, 1.0f, 1.0f), Vec(1.0f, 1.0f, 1.0f, 1.0f) },
     },
     Face {
-        Triangle { Vec(0.0f, 0.0f, 0.0f), Vec(1.0f, 0.0f, 0.0f), Vec(1.0f, 0.0f, 1.0f) },
-        Triangle { Vec(1.0f, 0.0f, 1.0f), Vec(0.0f, 0.0f, 1.0f), Vec(0.0f, 0.0f, 0.0f) },
+        Triangle { Vec(0.0f, 0.0f, 0.0f, 1.0f), Vec(1.0f, 0.0f, 0.0f, 1.0f), Vec(1.0f, 0.0f, 1.0f, 1.0f) },
+        Triangle { Vec(1.0f, 0.0f, 1.0f, 1.0f), Vec(0.0f, 0.0f, 1.0f, 1.0f), Vec(0.0f, 0.0f, 0.0f, 1.0f) },
     },
     Face {
-        Triangle { Vec(0.0f, 1.0f, 0.0f), Vec(1.0f, 1.0f, 0.0f), Vec(1.0f, 1.0f, 1.0f) },
-        Triangle { Vec(1.0f, 1.0f, 1.0f), Vec(0.0f, 1.0f, 1.0f), Vec(0.0f, 1.0f, 0.0f) },
+        Triangle { Vec(0.0f, 1.0f, 0.0f, 1.0f), Vec(1.0f, 1.0f, 0.0f, 1.0f), Vec(1.0f, 1.0f, 1.0f, 1.0f) },
+        Triangle { Vec(1.0f, 1.0f, 1.0f, 1.0f), Vec(0.0f, 1.0f, 1.0f, 1.0f), Vec(0.0f, 1.0f, 0.0f, 1.0f) },
     },
 };
