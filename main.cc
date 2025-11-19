@@ -124,11 +124,9 @@ int main() {
 
     Cube cube_copy(cube);
 
-    float h = height;
-    float w = width;
-    float z = -1.0;
+    // TODO: convert to opengl ndc
 
-    auto teapot_triangles = load_obj("cube.obj");
+    auto teapot_triangles = load_obj("teapot.obj");
     auto teapot_triangles_clone(teapot_triangles);
 
     // ras.draw_triangle(
@@ -176,7 +174,7 @@ int main() {
             // t.b.y *= -1;
             // t.c.y *= -1;
 
-            auto rot_mat = Mat::rotate(Vec {1.0f, 1.0f, 1.0f, 1.0f}, deg_to_rad(rl::GetTime()*20));
+            auto rot_mat = Mat::rotate(Vec {1.0f, 1.0f, 0.0f, 1.0f}, deg_to_rad(rl::GetTime()*20));
             t.a = rot_mat * t_clone.a;
             t.b = rot_mat * t_clone.b;
             t.c = rot_mat * t_clone.c;

@@ -119,13 +119,37 @@ struct Mat {
         };
     }
 
-    [[nodiscard]] static constexpr Mat rotate(Vec r, float a) {
-        return {
-            Vec { std::cos(a)+std::pow(r.x, 2.0f)*(1.0f-std::cos(a)), r.x*r.y*(1.0f-std::cos(a))-r.z*std::sin(a), r.x*r.z*(1.0f-std::cos(a))+r.y*std::sin(a), 0.0f },
-            Vec { r.y*r.x*(1.0f-std::cos(a))+r.z*std::sin(a), std::cos(a)+std::pow(r.y, 2.0f)+(1.0f-std::cos(a)), r.y*r.z*(1.0f-std::cos(a))-r.x*std::sin(a), 0.0f },
-            Vec { r.z*r.x*(1.0f-std::cos(a))-r.y*std::sin(a), r.z*r.y*(1.0f-std::cos(a))+r.x*std::sin(a), std::cos(a)+std::pow(r.z, 2.0f)*(1.0f-std::cos(a)) },
-            Vec { 0.0f, 0.0f, 0.0f, 1.0f },
-        };
+    [[nodiscard]] static constexpr Mat rotate(Vec r, float angle_radians) {
+
+        using std::sin;
+        using std::cos;
+        using std::pow;
+
+        float a = angle_radians;
+        Mat m;
+
+        m.m[0][0] = cos(a) + pow(r.x, 2.0f) * (1.0f - cos(a));
+        m.m[1][0] = r.x * r.y * (1.0f - cos(a)) - r.z * sin(a);
+        m.m[2][0] = r.x * r.z * (1.0f - cos(a)) + r.y * sin(a);
+        m.m[3][0] = 0.0f;
+
+        m.m[0][1] = r.y * r.x * (1.0f - cos(a)) + r.z * sin(a);
+        m.m[1][1] = cos(a) + pow(r.y, 2.0f) * (1.0f - cos(a));
+        m.m[2][1] = r.y * r.z * (1.0f - cos(a)) - r.x * sin(a);
+        m.m[3][1] = 0.0f;
+
+        m.m[0][2] = r.z * r.x * (1.0f - cos(a)) - r.y * sin(a);
+        m.m[1][2] = r.z * r.y * (1.0f - cos(a)) + r.x * sin(a);
+        m.m[2][2] = cos(a) + pow(r.z, 2.0f) * (1.0f - cos(a));
+        m.m[3][2] = 0.0f;
+
+        m.m[0][3] = 0.0f;
+        m.m[1][3] = 0.0f;
+        m.m[2][3] = 0.0f;
+        m.m[3][3] = 1.0f;
+
+        return m;
+
     }
 
     // returns the nth row as a vector

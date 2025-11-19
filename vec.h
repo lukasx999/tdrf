@@ -10,6 +10,16 @@ struct Vec {
     float z = 0.0f;
     float w = 0.0f;
 
+    constexpr float& operator[](int i) {
+        switch (i) {
+            case 0: return x;
+            case 1: return y;
+            case 2: return z;
+            case 3: return w;
+        }
+        throw std::runtime_error("invalid vector access");
+    }
+
     constexpr float operator[](int i) const {
         switch (i) {
             case 0: return x;
