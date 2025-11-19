@@ -58,17 +58,10 @@ int main() {
     float z = -1.0;
 
     // ras.draw_triangle(
-    //     {w/2, 0, 0, 0},
-    //     {w, h, 0, 0},
+    //     {w/2, 0, -50, 0},
+    //     {w, h, -100, 0},
     //     {0, h, 0, 0},
     //     Color::blue()
-    // );
-    //
-    // ras.draw_triangle(
-    //     {0, 0, z, 0},
-    //     {w, 0, z, 0},
-    //     {w/2, h, z, 0},
-    //     Color::red()
     // );
 
     for (auto& face : cube_copy.faces) {
@@ -99,9 +92,13 @@ int main() {
         rl::BeginDrawing();
         rl::ClearBackground(rl::BLACK);
 
-        for (int x = 0; x < width; ++x) {
-            for (int y = 0; y < height; ++y) {
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
                 rl::Color c = std::bit_cast<rl::Color>(color_buffer.get(x, y));
+
+                // float d = 1-(depth_buffer.get(x, y) / -100);
+                // rl::Color c(d*0xff, d*0xff, d*0xff, 0xff);
+
                 rl::DrawRectangle(x, y, 1, 1, c);
             }
         }
