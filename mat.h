@@ -111,12 +111,30 @@ struct Mat {
     }
 
     [[nodiscard]] static constexpr Mat translate(Vec v) {
-        return {
-            Vec { 1.0f, 0.0f, 0.0f, 0.0f },
-            Vec { 0.0f, 1.0f, 0.0f, 0.0f },
-            Vec { 0.0f, 0.0f, 1.0f, 0.0f },
-            Vec { v.x, v.y, v.z, 1.0f },
-        };
+
+        Mat m;
+
+        m.m[0][0] = 1.0f;
+        m.m[1][0] = 0.0f;
+        m.m[2][0] = 0.0f;
+        m.m[3][0] = v.x;
+
+        m.m[0][1] = 0.0f;
+        m.m[1][1] = 1.0f;
+        m.m[2][1] = 0.0f;
+        m.m[3][1] = v.y;
+
+        m.m[0][2] = 0.0f;
+        m.m[1][2] = 0.0f;
+        m.m[2][2] = 1.0f;
+        m.m[3][2] = v.z;
+
+        m.m[0][3] = 0.0f;
+        m.m[1][3] = 0.0f;
+        m.m[2][3] = 0.0f;
+        m.m[3][3] = 1.0f;
+
+        return m;
     }
 
     [[nodiscard]] static constexpr Mat rotate(Vec r, float angle_radians) {

@@ -13,8 +13,6 @@ namespace rl {
 #include "ras.h"
 #include "aux.h"
 
-// TODO: wavefront obj loader
-
 namespace {
 
 void write_to_ppm(const char* filename, const ColorBuffer& color_buffer) {
@@ -105,7 +103,64 @@ void write_to_ppm(const char* filename, const ColorBuffer& color_buffer) {
 
 } // namespace
 
+void test_vector_matrix() {
+
+    Vec v(2, 6, 1, 1);
+    Mat m1({
+        Vec(10, 0, 66, 1),
+        Vec(2, 17, 3, 1),
+        Vec(1, 0, 4, 24),
+        Vec(1, 1, 9, 1),
+    });
+
+    auto r = m1 * v;
+    assert(r.x == 34);
+    assert(r.y == 103);
+    assert(r.z == 163);
+    assert(r.w == 33);
+}
+
+void test_translate() {
+
+    Mat translate = Mat::translate({2, 2, 7, 1});
+    auto r = translate * Vec(3, 2, 3, 1);
+    assert(r.x == 5);
+    assert(r.y == 4);
+    assert(r.z == 10);
+    assert(r.w == 1);
+}
+
+void test_scale() {
+
+    Mat scale = Mat::scale({2, 2, 2, 2});
+    auto r = scale * Vec(1, 2, 3, 4);
+    assert(r.x == 2);
+    assert(r.y == 4);
+    assert(r.z == 6);
+    assert(r.w == 4);
+}
+
+void test_rotate() {
+    float eps = 1e-3;
+    Mat rot = Mat::rotate({1, 0, 0, 1}, deg_to_rad(90));
+    auto r = rot * Vec(0, 0, 1, 1);
+    assert(r.x == 0);
+    assert(r.y == -1);
+    assert(r.z < eps);
+}
+
+void test() {
+
+    test_vector_matrix();
+    test_translate();
+    test_scale();
+    test_rotate();
+
+}
+
 int main() {
+
+    test();
 
     ColorBuffer color_buffer(1600, 900);
     DepthBuffer depth_buffer(1600, 900);
