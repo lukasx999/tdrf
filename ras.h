@@ -153,6 +153,10 @@ public:
     //
     void draw_triangle(Vec a_ndc, Vec b_ndc, Vec c_ndc, Color color) {
 
+        // TODO: clip vertices outside of ndc area, and reconstruct triangle
+        // TODO: divide by w
+
+        // TODO: fix z values, they should go from 0.0 to 1.0
         auto a_vp = viewport_transform(a_ndc);
         auto b_vp = viewport_transform(b_ndc);
         auto c_vp = viewport_transform(c_ndc);
