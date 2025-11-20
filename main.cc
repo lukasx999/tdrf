@@ -101,8 +101,6 @@ void write_to_ppm(const char* filename, const ColorBuffer& color_buffer) {
     return faces;
 }
 
-} // namespace
-
 void test_vector_matrix() {
 
     Vec v(2, 6, 1, 1);
@@ -158,6 +156,22 @@ void test() {
 
 }
 
+void rl_draw_color_buffer(const ColorBuffer& color_buffer) {
+
+    for (int y = 0; y < color_buffer.get_height(); ++y) {
+        for (int x = 0; x < color_buffer.get_width(); ++x) {
+            rl::Color c = std::bit_cast<rl::Color>(color_buffer.get(x, y));
+
+            // float d = 1-(depth_buffer.get(x, y) / -150);
+            // rl::Color c(d*0xff, d*0xff, d*0xff, 0xff);
+
+            rl::DrawRectangle(x, y, 1, 1, c);
+        }
+    }
+}
+
+} // namespace
+
 int main() {
 
     test();
@@ -184,12 +198,9 @@ int main() {
     auto teapot_triangles = load_obj("teapot.obj");
     auto teapot_triangles_clone(teapot_triangles);
 
-    // ras.draw_triangle(
-    //     {w/2, 50, 0, 0},
-    //     {w-50, h-50, 0, 0},
-    //     {50, h-50, 0, 0},
-    //     Color::blue()
-    // );
+    Vec t1(0.5, 0, 0, 1);
+    Vec t2(1, 1, 0, 1);
+    Vec t3(0, 1, 0, 1);
 
     // for (auto& face : cube_copy.faces) {
     //     for (auto& t : face.triangles) {
@@ -222,31 +233,23 @@ int main() {
 
         ras.clear();
 
-        for (auto&& [t, t_clone] : std::views::zip(teapot_triangles, teapot_triangles_clone)) {
-            float scale = 30;
+        // for (auto&& [t, t_clone] : std::views::zip(teapot_triangles, teapot_triangles_clone)) {
+        //     float scale = 30;
+        //
+        //     // TODO: fix matrix translation
+        //     auto rot_mat = Mat::rotate({1.0f, 0.0f, 0.0f, 1.0f}, deg_to_rad(rl::GetTime()*50));
+        //     auto scale_mat = Mat::scale({scale, scale, scale, 1.0f});
+        //     auto transf_mat = Mat::translate({width/2.0f, height/2.0f, 0.0f, 1.0f});
+        //     auto mat = transf_mat * scale_mat * rot_mat;
+        //     t.a = mat * t_clone.a;
+        //     t.b = mat * t_clone.b;
+        //     t.c = mat * t_clone.c;
+        //
+        //     ras.draw_triangle(t.a, t.b, t.c, Color::blue());
+        // }
 
-            // TODO: fix matrix translation
-            auto rot_mat = Mat::rotate({1.0f, 0.0f, 0.0f, 1.0f}, deg_to_rad(rl::GetTime()*50));
-            auto scale_mat = Mat::scale({scale, scale, scale, 1.0f});
-            auto transf_mat = Mat::translate({width/2.0f, height/2.0f, 0.0f, 1.0f});
-            auto mat = transf_mat * scale_mat * rot_mat;
-            t.a = mat * t_clone.a;
-            t.b = mat * t_clone.b;
-            t.c = mat * t_clone.c;
+        rl_draw_color_buffer(color_buffer);
 
-            ras.draw_triangle(t.a, t.b, t.c, Color::blue());
-        }
-
-        for (int y = 0; y < height; ++y) {
-            for (int x = 0; x < width; ++x) {
-                rl::Color c = std::bit_cast<rl::Color>(color_buffer.get(x, y));
-
-                // float d = 1-(depth_buffer.get(x, y) / -150);
-                // rl::Color c(d*0xff, d*0xff, d*0xff, 0xff);
-
-                rl::DrawRectangle(x, y, 1, 1, c);
-            }
-        }
 
         rl::EndDrawing();
     }
