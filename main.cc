@@ -193,14 +193,12 @@ int main() {
 
     Cube cube_copy(cube);
 
-    // TODO: convert to opengl ndc
+    // auto teapot_triangles = load_obj("teapot.obj");
+    // auto teapot_triangles_clone(teapot_triangles);
 
-    auto teapot_triangles = load_obj("teapot.obj");
-    auto teapot_triangles_clone(teapot_triangles);
-
-    Vec t1(0.5, 0, 0, 1);
-    Vec t2(1, 1, 0, 1);
-    Vec t3(0, 1, 0, 1);
+    Vec t1(0, 0, 0, 1);
+    Vec t2(0, 0.5, 0, 1);
+    Vec t3(0.5, 0, 0, 1);
 
     // for (auto& face : cube_copy.faces) {
     //     for (auto& t : face.triangles) {
@@ -223,7 +221,7 @@ int main() {
     // }
 
 
-    // write_to_ppm("out.ppm", color_buffer);
+    write_to_ppm("out.ppm", color_buffer);
 
     rl::InitWindow(width, height, "ras");
 
@@ -231,7 +229,6 @@ int main() {
         rl::BeginDrawing();
         rl::ClearBackground(rl::BLACK);
 
-        ras.clear();
 
         // for (auto&& [t, t_clone] : std::views::zip(teapot_triangles, teapot_triangles_clone)) {
         //     float scale = 30;
@@ -247,6 +244,9 @@ int main() {
         //
         //     ras.draw_triangle(t.a, t.b, t.c, Color::blue());
         // }
+
+        ras.clear();
+        ras.draw_triangle(t1, t2, t3, Color::blue());
 
         rl_draw_color_buffer(color_buffer);
 

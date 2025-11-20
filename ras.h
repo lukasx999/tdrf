@@ -102,6 +102,7 @@ class Rasterizer {
     DepthBuffer& m_depth_buffer;
 
 public:
+    // TODO: construct buffers inplace
     Rasterizer(ColorBuffer& color_buffer, DepthBuffer& depth_buffer)
         : m_color_buffer(color_buffer)
         , m_depth_buffer(depth_buffer)
@@ -114,49 +115,84 @@ public:
         m_depth_buffer.clear(-std::numeric_limits<float>::max());
     }
 
-    void draw_triangle(Vec a, Vec b, Vec c, Color color) {
+private:
+    [[nodiscard]] auto get_triangle_aabb(Vec a, Vec b, Vec c) {
+        struct AABB {
+            float x, y, width, height;
+        } aabb;
 
-        float aabb_x = std::min({a.x, b.x, c.x});
-        float aabb_y = std::min({a.y, b.y, c.y});
-        float aabb_width = std::max({a.x, b.x, c.x});
-        float aabb_height = std::max({a.y, b.y, c.y});
+        aabb.x = std::min({a.x, b.x, c.x});
+        aabb.y = std::min({a.y, b.y, c.y});
+        aabb.width = std::max({a.x, b.x, c.x});
+        aabb.height = std::max({a.y, b.y, c.y});
 
-        assert(aabb_width < m_color_buffer.get_width());
-        assert(aabb_height < m_color_buffer.get_height());
+        assert(aabb.width < m_color_buffer.get_width());
+        assert(aabb.height < m_color_buffer.get_height());
 
-        for (float x = aabb_x; x < aabb_width; ++x) {
-            for (float y = aabb_y; y < aabb_height; ++y) {
+        return aabb;
+    }
+public:
+
+    //
+    //                      (y)
+    //                       1     (-z)
+    //                       ^     -1
+    //                       |    /
+    //                       |   /
+    //                       |  /
+    //                       | /
+    //                       |/
+    // (-x) -1 -------------------------------> 1 (x)
+    //                      /|
+    //                     / |
+    //                    /  |
+    //                   /   |
+    //                  /    |
+    //                 1     -1
+    //               (z)    (-y)
+    //
+    void draw_triangle(Vec a_ndc, Vec b_ndc, Vec c_ndc, Color color) {
+
+        auto a_vp = viewport_transform(a_ndc);
+        auto b_vp = viewport_transform(b_ndc);
+        auto c_vp = viewport_transform(c_ndc);
+
+        auto aabb = get_triangle_aabb(a_vp, b_vp, c_vp);
+
+        for (float x = aabb.x; x < m_color_buffer.get_width(); ++x) {
+            for (float y = aabb.y; y < m_color_buffer.get_height(); ++y) {
                 Vec p { x, y, 0.0f, 1.0f };
 
-                int abc = edge_function(a, b, c);
-                int abp = edge_function(a, b, p);
-                int bcp = edge_function(b, c, p);
-                int cap = edge_function(c, a, p);
+                float abc = edge_function(a_vp, b_vp, c_vp);
+                float abp = edge_function(a_vp, b_vp, p);
+                float bcp = edge_function(b_vp, c_vp, p);
+                float cap = edge_function(c_vp, a_vp, p);
 
-                float weight_a = static_cast<float>(bcp) / abc;
-                float weight_b = static_cast<float>(cap) / abc;
-                float weight_c = static_cast<float>(abp) / abc;
+                float weight_a = bcp / abc;
+                float weight_b = cap / abc;
+                float weight_c = abp / abc;
 
-                float depth = a.z * weight_a +
-                              b.z * weight_b +
-                              c.z * weight_c;
+                float depth = a_vp.z * weight_a +
+                              b_vp.z * weight_b +
+                              c_vp.z * weight_c;
 
                 Color col = Color::red()   * weight_a +
                             Color::green() * weight_b +
                             Color::blue()  * weight_c;
 
-                float stored_depth = m_depth_buffer.get(x, y);
+                // float stored_depth = m_depth_buffer.get(x, y);
+                // if (depth < stored_depth) continue;
 
                 // TODO: wireframe mode
                 // TODO: blending
 
-                if (depth < stored_depth) continue;
 
                 bool show_aabb = false;
 
                 if (abp >= 0 && bcp >= 0 && cap >= 0) {
                     m_color_buffer.write(x, y, col);
                     m_depth_buffer.write(x, y, depth);
+
                 } else if (show_aabb) {
                     m_color_buffer.write(x, y, Color::red());
                 }
@@ -171,5 +207,17 @@ private:
     [[nodiscard]] static constexpr float edge_function(Vec a, Vec b, Vec c) {
         return (b.x-a.x)*(c.y-a.y) - (b.y-a.y)*(c.x-a.x);
     }
+
+    // transforms coordinates from NDC to the actual viewport
+    [[nodiscard]] Vec viewport_transform(Vec v) const {
+        return {
+            ((v.x + 1) / 2) * m_color_buffer.get_width(),
+            ((v.y - 1) / 2) * m_color_buffer.get_height(),
+            v.z,
+            v.w
+        };
+
+    }
+
 
 };
