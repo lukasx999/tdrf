@@ -212,7 +212,7 @@ private:
     [[nodiscard]] Vec viewport_transform(Vec v) const {
         return {
             ((v.x + 1) / 2) * m_color_buffer.get_width(),
-            ((v.y - 1) / 2) * m_color_buffer.get_height(),
+            (-(v.y - 1) / 2) * m_color_buffer.get_height(),
             v.z,
             v.w
         };
