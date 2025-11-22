@@ -246,7 +246,7 @@ int main() {
         // }
 
         ras.clear();
-        ras.draw_triangle(t1, t2, t3, Color::blue());
+        ras.draw_triangle(t1, t2, t3, default_vertex_shader, default_fragment_shader);
 
         rl_draw_color_buffer(color_buffer);
 

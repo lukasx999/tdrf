@@ -7,6 +7,10 @@
 
 #include "math.h"
 
+struct Rectangle {
+    float x, y, width, height;
+};
+
 struct Color {
     uint8_t r = 0;
     uint8_t g = 0;
@@ -54,6 +58,17 @@ struct Color {
 };
 
 static_assert(sizeof(Color) == 4);
+
+using VertexShader = Vec(Vec);
+using FragmentShader = Color(Vec);
+
+[[nodiscard]] inline Vec default_vertex_shader(Vec pos) {
+    return pos;
+}
+
+[[nodiscard]] inline Color default_fragment_shader(Vec) {
+    return Color::blue();
+}
 
 template <typename T>
 class Buffer {
@@ -112,46 +127,25 @@ public:
 
     void clear() {
         m_color_buffer.clear(Color::black());
-        m_depth_buffer.clear(-std::numeric_limits<float>::max());
+        m_depth_buffer.clear(-1.0f);
     }
 
-private:
-    [[nodiscard]] auto get_triangle_aabb(Vec a, Vec b, Vec c) {
-        struct AABB {
-            float x, y, width, height;
-        } aabb;
-
-        aabb.x = std::min({a.x, b.x, c.x});
-        aabb.y = std::min({a.y, b.y, c.y});
-        aabb.width = std::max({a.x, b.x, c.x});
-        aabb.height = std::max({a.y, b.y, c.y});
-
-        assert(aabb.width < m_color_buffer.get_width());
-        assert(aabb.height < m_color_buffer.get_height());
-
-        return aabb;
-    }
 public:
-
     //
-    //                      (y)
-    //                       1     (-z)
-    //                       ^     -1
-    //                       |    /
-    //                       |   /
-    //                       |  /
-    //                       | /
-    //                       |/
-    // (-x) -1 -------------------------------> 1 (x)
-    //                      /|
-    //                     / |
-    //                    /  |
-    //                   /   |
-    //                  /    |
-    //                 1     -1
-    //               (z)    (-y)
+    //                (y)
+    //                 1 (-z)
+    //                 ^  -1
+    //                 |  /
+    //                 | /
+    //                 |/
+    // (-x) -1 -----------------> 1 (x)
+    //                /|
+    //               / |
+    //              /  |
+    //             1  -1
+    //            (z)(-y)
     //
-    void draw_triangle(Vec a_ndc, Vec b_ndc, Vec c_ndc, Color color) {
+    void draw_triangle(Vec a_ndc, Vec b_ndc, Vec c_ndc, VertexShader vs, FragmentShader fs) {
 
         // TODO: clip vertices outside of ndc area, and reconstruct triangle
         // TODO: divide by w
@@ -183,6 +177,8 @@ public:
                 Color col = Color::red()   * weight_a +
                             Color::green() * weight_b +
                             Color::blue()  * weight_c;
+                Vec out = vs(p);
+                Color color = fs(p);
 
                 // float stored_depth = m_depth_buffer.get(x, y);
                 // if (depth < stored_depth) continue;
@@ -190,15 +186,14 @@ public:
                 // TODO: wireframe mode
                 // TODO: blending
 
-
                 bool show_aabb = false;
 
                 if (abp >= 0 && bcp >= 0 && cap >= 0) {
-                    m_color_buffer.write(x, y, col);
-                    m_depth_buffer.write(x, y, depth);
+                    m_color_buffer.write(out.x, out.y, color);
+                    m_depth_buffer.write(out.x, out.y, depth);
 
                 } else if (show_aabb) {
-                    m_color_buffer.write(x, y, Color::red());
+                    m_color_buffer.write(out.x, out.y, Color::red());
                 }
 
             }
@@ -223,5 +218,19 @@ private:
 
     }
 
+    [[nodiscard]] Rectangle get_triangle_aabb(Vec a, Vec b, Vec c) {
+
+        Rectangle aabb;
+
+        aabb.x = std::min({a.x, b.x, c.x});
+        aabb.y = std::min({a.y, b.y, c.y});
+        aabb.width = std::max({a.x, b.x, c.x});
+        aabb.height = std::max({a.y, b.y, c.y});
+
+        assert(aabb.width < m_color_buffer.get_width());
+        assert(aabb.height < m_color_buffer.get_height());
+
+        return aabb;
+    }
 
 };
