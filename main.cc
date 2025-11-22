@@ -222,6 +222,7 @@ int main() {
             auto fs = [](Vec) {
                 return Color::blue();
             };
+
             ras.draw_triangle(t.a, t.b, t.c, vs, fs);
         }
     }
