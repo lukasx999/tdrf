@@ -131,6 +131,10 @@ public:
     }
 
 public:
+    void draw_triangle(Vec a_ndc, Vec b_ndc, Vec c_ndc) {
+        draw_triangle(a_ndc, b_ndc, c_ndc, default_vertex_shader, default_fragment_shader);
+    }
+
     //
     //                (y)
     //                 1 (-z)
@@ -149,6 +153,10 @@ public:
 
         // TODO: clip vertices outside of ndc area, and reconstruct triangle
         // TODO: divide by w
+
+        a_ndc = vs(a_ndc);
+        b_ndc = vs(b_ndc);
+        c_ndc = vs(c_ndc);
 
         // TODO: fix z values, they should go from 0.0 to 1.0
         auto a_vp = viewport_transform(a_ndc);
@@ -174,10 +182,10 @@ public:
                               b_vp.z * weight_b +
                               c_vp.z * weight_c;
 
-                Color col = Color::red()   * weight_a +
-                            Color::green() * weight_b +
-                            Color::blue()  * weight_c;
-                Vec out = vs(p);
+                Color color_debug = Color::red()   * weight_a +
+                                    Color::green() * weight_b +
+                                    Color::blue()  * weight_c;
+
                 Color color = fs(p);
 
                 // float stored_depth = m_depth_buffer.get(x, y);
@@ -188,12 +196,13 @@ public:
 
                 bool show_aabb = false;
 
-                if (abp >= 0 && bcp >= 0 && cap >= 0) {
-                    m_color_buffer.write(out.x, out.y, color);
-                    m_depth_buffer.write(out.x, out.y, depth);
+                // triangle vertices must be in counter-clockwise order
+                if (abp <= 0 && bcp <= 0 && cap <= 0) {
+                    m_color_buffer.write(x, y, color_debug);
+                    m_depth_buffer.write(x, y, depth);
 
                 } else if (show_aabb) {
-                    m_color_buffer.write(out.x, out.y, Color::red());
+                    m_color_buffer.write(x, y, Color::red());
                 }
 
             }

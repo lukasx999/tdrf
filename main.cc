@@ -176,8 +176,8 @@ int main() {
 
     test();
 
-    ColorBuffer color_buffer(1600, 900);
-    DepthBuffer depth_buffer(1600, 900);
+    ColorBuffer color_buffer(900, 900);
+    DepthBuffer depth_buffer(900, 900);
     Rasterizer ras(color_buffer, depth_buffer);
     int width = color_buffer.get_width();
     int height = color_buffer.get_height();
@@ -197,8 +197,8 @@ int main() {
     // auto teapot_triangles_clone(teapot_triangles);
 
     Vec t1(0, 0, 0, 1);
-    Vec t2(0, 0.5, 0, 1);
-    Vec t3(0.5, 0, 0, 1);
+    Vec t2(0.5, 0, 0, 1);
+    Vec t3(0, 0.5, 0, 1);
 
     // for (auto& face : cube_copy.faces) {
     //     for (auto& t : face.triangles) {
@@ -208,21 +208,28 @@ int main() {
     //         t.c = rot_mat * t.c;
     //     }
     // }
-    //
-    // for (auto&& [face_nr, face] : cube_copy.faces | std::views::enumerate) {
-    //     for (auto& t : face.triangles) {
-    //         auto color = face_color_map[face_nr];
-    //         float w = 100;
-    //         float h = 100;
-    //         float d = 100;
-    //         Vec offset {width/2.0f-w/2.0f, height/2.0f-h/2.0f};
-    //         ras.draw_triangle(t.a*w+offset, t.b*h+offset, t.c*d+offset, color);
-    //     }
-    // }
+
+    for (auto&& [face_nr, face] : cube_copy.faces | std::views::enumerate) {
+        for (auto& t : face.triangles) {
+            auto color = face_color_map[face_nr];
+
+            auto vs = [](Vec p) {
+                auto scale = Mat::scale({0.5, 0.5, 0.0, 1.0});
+                auto rot = Mat::rotate(Vec {1.0f, 1.0f, 0.0f, 1.0f}, deg_to_rad(15));
+                return rot * scale * p;
+            };
+
+            auto fs = [](Vec) {
+                return Color::blue();
+            };
+            ras.draw_triangle(t.a, t.b, t.c, vs, fs);
+        }
+    }
 
 
     write_to_ppm("out.ppm", color_buffer);
 
+    rl::SetConfigFlags(rl::FLAG_WINDOW_RESIZABLE);
     rl::InitWindow(width, height, "ras");
 
     while (!rl::WindowShouldClose()) {
@@ -245,11 +252,10 @@ int main() {
         //     ras.draw_triangle(t.a, t.b, t.c, Color::blue());
         // }
 
-        ras.clear();
-        ras.draw_triangle(t1, t2, t3, default_vertex_shader, default_fragment_shader);
+        // ras.clear();
+        // ras.draw_triangle(t1, t2, t3, default_vertex_shader, default_fragment_shader);
 
         rl_draw_color_buffer(color_buffer);
-
 
         rl::EndDrawing();
     }
