@@ -141,24 +141,23 @@ struct Mat {
 
         using std::sin;
         using std::cos;
-        using std::pow;
 
         float a = angle_radians;
         Mat m;
 
-        m.m[0][0] = cos(a) + pow(r.x, 2.0f) * (1.0f - cos(a));
-        m.m[1][0] = r.x * r.y * (1.0f - cos(a)) - r.z * sin(a);
-        m.m[2][0] = r.x * r.z * (1.0f - cos(a)) + r.y * sin(a);
+        m.m[0][0] = cos(a) + r.x*r.x * (1.0f-cos(a));
+        m.m[1][0] = r.x*r.y * (1.0f-cos(a)) - r.z*sin(a);
+        m.m[2][0] = r.x*r.z * (1.0f-cos(a)) + r.y*sin(a);
         m.m[3][0] = 0.0f;
 
-        m.m[0][1] = r.y * r.x * (1.0f - cos(a)) + r.z * sin(a);
-        m.m[1][1] = cos(a) + pow(r.y, 2.0f) * (1.0f - cos(a));
-        m.m[2][1] = r.y * r.z * (1.0f - cos(a)) - r.x * sin(a);
+        m.m[0][1] = r.y*r.x * (1.0f-cos(a)) + r.z*sin(a);
+        m.m[1][1] = cos(a) + r.y*r.y * (1.0f-cos(a));
+        m.m[2][1] = r.y*r.z * (1.0f-cos(a)) - r.x*sin(a);
         m.m[3][1] = 0.0f;
 
-        m.m[0][2] = r.z * r.x * (1.0f - cos(a)) - r.y * sin(a);
-        m.m[1][2] = r.z * r.y * (1.0f - cos(a)) + r.x * sin(a);
-        m.m[2][2] = cos(a) + pow(r.z, 2.0f) * (1.0f - cos(a));
+        m.m[0][2] = r.z*r.x * (1.0f-cos(a)) - r.y*sin(a);
+        m.m[1][2] = r.z*r.y * (1.0f-cos(a)) + r.x*sin(a);
+        m.m[2][2] = cos(a) + r.z*r.z * (1.0f-cos(a));
         m.m[3][2] = 0.0f;
 
         m.m[0][3] = 0.0f;

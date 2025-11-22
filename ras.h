@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <cassert>
 #include <print>
+#include <random>
 #include <vector>
 
 #include "math.h"
@@ -131,10 +132,6 @@ public:
     }
 
 public:
-    void draw_triangle(Vec a_ndc, Vec b_ndc, Vec c_ndc) {
-        draw_triangle(a_ndc, b_ndc, c_ndc, default_vertex_shader, default_fragment_shader);
-    }
-
     //
     //                (y)
     //                 1 (-z)
@@ -149,7 +146,7 @@ public:
     //             1  -1
     //            (z)(-y)
     //
-    void draw_triangle(Vec a_ndc, Vec b_ndc, Vec c_ndc, VertexShader vs, FragmentShader fs) {
+    void draw_triangle(Vec a_ndc, Vec b_ndc, Vec c_ndc, VertexShader vs, FragmentShader fs, Color color) {
 
         // TODO: clip vertices outside of ndc area, and reconstruct triangle
         // TODO: divide by w
@@ -159,9 +156,9 @@ public:
         c_ndc = vs(c_ndc);
 
         // TODO: fix z values, they should go from 0.0 to 1.0
-        auto a_vp = viewport_transform(a_ndc);
-        auto b_vp = viewport_transform(b_ndc);
-        auto c_vp = viewport_transform(c_ndc);
+        Vec a_vp = viewport_transform(a_ndc);
+        Vec b_vp = viewport_transform(b_ndc);
+        Vec c_vp = viewport_transform(c_ndc);
 
         auto aabb = get_triangle_aabb(a_vp, b_vp, c_vp);
 
@@ -182,23 +179,26 @@ public:
                               b_vp.z * weight_b +
                               c_vp.z * weight_c;
 
+                float stored_depth = m_depth_buffer.get(x, y);
+                if (depth < stored_depth) continue;
+
                 Color color_debug = Color::red()   * weight_a +
                                     Color::green() * weight_b +
                                     Color::blue()  * weight_c;
 
-                Color color = fs(p);
-
-                // float stored_depth = m_depth_buffer.get(x, y);
-                // if (depth < stored_depth) continue;
-
+                // TODO: cull modes
+                // TODO: vertex shader outputs
                 // TODO: wireframe mode
                 // TODO: blending
 
                 bool show_aabb = false;
 
-                // triangle vertices must be in counter-clockwise order
-                if (abp <= 0 && bcp <= 0 && cap <= 0) {
-                    m_color_buffer.write(x, y, color_debug);
+                bool ccw = abp <= 0 && bcp <= 0 && cap <= 0;
+                bool cw = abp >= 0 && bcp >= 0 && cap >= 0;
+
+                if (ccw || cw) {
+                    // Color color = fs(p);
+                    m_color_buffer.write(x, y, color);
                     m_depth_buffer.write(x, y, depth);
 
                 } else if (show_aabb) {

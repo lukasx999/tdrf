@@ -11,7 +11,10 @@ namespace rl {
 
 #include "math.h"
 #include "ras.h"
-#include "aux.h"
+
+struct Triangle {
+    std::array<Vec, 3> vertices;
+};
 
 namespace {
 
@@ -156,13 +159,13 @@ void test() {
 
 }
 
-void rl_draw_color_buffer(const ColorBuffer& color_buffer) {
+void rl_draw_color_buffer(const ColorBuffer& color_buffer, const DepthBuffer& depth_buffer) {
 
     for (int y = 0; y < color_buffer.get_height(); ++y) {
         for (int x = 0; x < color_buffer.get_width(); ++x) {
             rl::Color c = std::bit_cast<rl::Color>(color_buffer.get(x, y));
 
-            // float d = 1-(depth_buffer.get(x, y) / -150);
+            // float d = (depth_buffer.get(x, y) + 1) / 2;
             // rl::Color c(d*0xff, d*0xff, d*0xff, 0xff);
 
             rl::DrawRectangle(x, y, 1, 1, c);
@@ -176,56 +179,73 @@ int main() {
 
     test();
 
-    ColorBuffer color_buffer(900, 900);
-    DepthBuffer depth_buffer(900, 900);
+    int w = 1000;
+    int h = w;
+    ColorBuffer color_buffer(w, h);
+    DepthBuffer depth_buffer(w, h);
     Rasterizer ras(color_buffer, depth_buffer);
     int width = color_buffer.get_width();
     int height = color_buffer.get_height();
 
-    std::array<Color, 6> face_color_map {
-        Color(0xff, 0x0, 0x0, 0xff),
-        Color(0x0, 0xff, 0x0, 0xff),
-        Color(0x0, 0x0, 0xff, 0xff),
-        Color(0x7f, 0x0, 0x0, 0xff),
-        Color(0x0, 0x7f, 0x0, 0xff),
-        Color(0x0, 0x0, 0x7f, 0xff),
-    };
-
-    Cube cube_copy(cube);
-
     // auto teapot_triangles = load_obj("teapot.obj");
     // auto teapot_triangles_clone(teapot_triangles);
+
+    std::array cube_vertices {
+
+        // back
+        Vec(-0.5f, -0.5f, -0.5f, 1.0f),
+        Vec( 0.5f, -0.5f, -0.5f, 1.0f),
+        Vec( 0.5f,  0.5f, -0.5f, 1.0f),
+        Vec( 0.5f,  0.5f, -0.5f, 1.0f),
+        Vec(-0.5f,  0.5f, -0.5f, 1.0f),
+        Vec(-0.5f, -0.5f, -0.5f, 1.0f),
+
+        // front
+        Vec(-0.5f, -0.5f,  0.5f, 1.0f),
+        Vec( 0.5f, -0.5f,  0.5f, 1.0f),
+        Vec( 0.5f,  0.5f,  0.5f, 1.0f),
+        Vec( 0.5f,  0.5f,  0.5f, 1.0f),
+        Vec(-0.5f,  0.5f,  0.5f, 1.0f),
+        Vec(-0.5f, -0.5f,  0.5f, 1.0f),
+
+        // left
+        Vec(-0.5f,  0.5f,  0.5f, 1.0f),
+        Vec(-0.5f,  0.5f, -0.5f, 1.0f),
+        Vec(-0.5f, -0.5f, -0.5f, 1.0f),
+        Vec(-0.5f, -0.5f, -0.5f, 1.0f),
+        Vec(-0.5f, -0.5f,  0.5f, 1.0f),
+        Vec(-0.5f,  0.5f,  0.5f, 1.0f),
+
+        // right
+        Vec( 0.5f,  0.5f,  0.5f, 1.0f),
+        Vec( 0.5f,  0.5f, -0.5f, 1.0f),
+        Vec( 0.5f, -0.5f, -0.5f, 1.0f),
+        Vec( 0.5f, -0.5f, -0.5f, 1.0f),
+        Vec( 0.5f, -0.5f,  0.5f, 1.0f),
+        Vec( 0.5f,  0.5f,  0.5f, 1.0f),
+
+        // bottom
+        Vec(-0.5f, -0.5f, -0.5f, 1.0f),
+        Vec( 0.5f, -0.5f, -0.5f, 1.0f),
+        Vec( 0.5f, -0.5f,  0.5f, 1.0f),
+        Vec( 0.5f, -0.5f,  0.5f, 1.0f),
+        Vec(-0.5f, -0.5f,  0.5f, 1.0f),
+        Vec(-0.5f, -0.5f, -0.5f, 1.0f),
+
+        // top
+        Vec(-0.5f,  0.5f, -0.5f, 1.0f),
+        Vec( 0.5f,  0.5f, -0.5f, 1.0f),
+        Vec( 0.5f,  0.5f,  0.5f, 1.0f),
+        Vec( 0.5f,  0.5f,  0.5f, 1.0f),
+        Vec(-0.5f,  0.5f,  0.5f, 1.0f),
+        Vec(-0.5f,  0.5f, -0.5f, 1.0f),
+
+    };
 
     Vec t1(0, 0, 0, 1);
     Vec t2(0.5, 0, 0, 1);
     Vec t3(0, 0.5, 0, 1);
 
-    // for (auto& face : cube_copy.faces) {
-    //     for (auto& t : face.triangles) {
-    //         auto rot_mat = Mat::rotate(Vec {1.0f, 1.0f, 0.0f, 1.0f}, deg_to_rad(45));
-    //         t.a = rot_mat * t.a;
-    //         t.b = rot_mat * t.b;
-    //         t.c = rot_mat * t.c;
-    //     }
-    // }
-
-    for (auto&& [face_nr, face] : cube_copy.faces | std::views::enumerate) {
-        for (auto& t : face.triangles) {
-            auto color = face_color_map[face_nr];
-
-            auto vs = [](Vec p) {
-                auto scale = Mat::scale({0.5, 0.5, 0.0, 1.0});
-                auto rot = Mat::rotate(Vec {1.0f, 1.0f, 0.0f, 1.0f}, deg_to_rad(15));
-                return rot * scale * p;
-            };
-
-            auto fs = [](Vec) {
-                return Color::blue();
-            };
-
-            ras.draw_triangle(t.a, t.b, t.c, vs, fs);
-        }
-    }
 
 
     write_to_ppm("out.ppm", color_buffer);
@@ -253,10 +273,48 @@ int main() {
         //     ras.draw_triangle(t.a, t.b, t.c, Color::blue());
         // }
 
-        // ras.clear();
-        // ras.draw_triangle(t1, t2, t3, default_vertex_shader, default_fragment_shader);
+        ras.clear();
 
-        rl_draw_color_buffer(color_buffer);
+        for (auto&& [idx, vertices] : cube_vertices | std::views::chunk(3) | std::views::enumerate) {
+
+            assert(vertices.size() == 3);
+            const Vec& a = vertices[0];
+            const Vec& b = vertices[1];
+            const Vec& c = vertices[2];
+
+            auto vs = [](Vec p) {
+                float s = 0.3;
+                auto scale = Mat::scale({s, s, s, 1});
+                // BUG: rotation matrix is implicitly scaling
+                auto angle = fmodf((rl::GetTime() * 35), 360);
+                auto rot = Mat::rotate(Vec {1.0f, 1.0f, 0.0f, 1.0f}, deg_to_rad(angle));
+                return rot * scale * p;
+            };
+
+            std::array colors {
+                Color::red(),
+                Color::red(),
+                Color::green(),
+                Color::green(),
+                Color::blue(),
+                Color::blue(),
+                Color(0x7f, 0x0, 0x0, 0xff),
+                Color(0x7f, 0x0, 0x0, 0xff),
+                Color(0x0, 0x7f, 0x0, 0xff),
+                Color(0x0, 0x7f, 0x0, 0xff),
+                Color(0x0, 0x0, 0x7f, 0xff),
+                Color(0x0, 0x0, 0x7f, 0xff),
+            };
+            Color color = colors[idx];
+
+            auto fs = [](Vec p) {
+                return Color::blue();
+            };
+
+            ras.draw_triangle(a, b, c, vs, fs, color);
+        }
+
+        rl_draw_color_buffer(color_buffer, depth_buffer);
 
         rl::EndDrawing();
     }
