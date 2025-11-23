@@ -102,12 +102,29 @@ struct Mat {
     }
 
     [[nodiscard]] static constexpr Mat scale(Vec v) {
-        return {
-            Vec { v.x, 0, 0, 0 },
-            Vec { 0, v.y, 0, 0 },
-            Vec { 0, 0, v.z, 0 },
-            Vec { 0, 0, 0, 1 },
-        };
+        Mat m;
+
+        m.m[0][0] = v.x;
+        m.m[1][0] = 0.0f;
+        m.m[2][0] = 0.0f;
+        m.m[3][0] = 0.0f;
+
+        m.m[0][1] = 0.0f;
+        m.m[1][1] = v.y;
+        m.m[2][1] = 0.0f;
+        m.m[3][1] = 0.0f;
+
+        m.m[0][2] = 0.0f;
+        m.m[1][2] = 0.0f;
+        m.m[2][2] = v.z;
+        m.m[3][2] = 0.0f;
+
+        m.m[0][3] = 0.0f;
+        m.m[1][3] = 0.0f;
+        m.m[2][3] = 0.0f;
+        m.m[3][3] = 1.0f;
+
+        return m;
     }
 
     [[nodiscard]] static constexpr Mat translate(Vec v) {

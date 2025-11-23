@@ -162,39 +162,53 @@ public:
 
         auto aabb = get_triangle_aabb(a_vp, b_vp, c_vp);
 
-        for (float x = aabb.x; x < m_color_buffer.get_width(); ++x) {
-            for (float y = aabb.y; y < m_color_buffer.get_height(); ++y) {
+        for (float x = aabb.x; x < aabb.width; ++x) {
+            for (float y = aabb.y; y < aabb.height; ++y) {
                 Vec p { x, y, 0.0f, 1.0f };
 
-                float abc = edge_function(a_vp, b_vp, c_vp);
-                float abp = edge_function(a_vp, b_vp, p);
-                float bcp = edge_function(b_vp, c_vp, p);
-                float cap = edge_function(c_vp, a_vp, p);
+                float abc = triangle_signed_area(a_vp, b_vp, c_vp);
+                float abp = triangle_signed_area(a_vp, b_vp, p);
+                float bcp = triangle_signed_area(b_vp, c_vp, p);
+                float cap = triangle_signed_area(c_vp, a_vp, p);
 
                 float weight_a = bcp / abc;
                 float weight_b = cap / abc;
                 float weight_c = abp / abc;
 
-                float depth = a_vp.z * weight_a +
-                              b_vp.z * weight_b +
-                              c_vp.z * weight_c;
+                auto interpolate_value = [&]<typename T>(T a, T b, T c) {
+                    return a * weight_a + b * weight_b + c * weight_c;
+                };
+
+                float depth = interpolate_value(a_vp.z, b_vp.z, c_vp.z);
 
                 float stored_depth = m_depth_buffer.get(x, y);
                 if (depth < stored_depth) continue;
 
-                Color color_debug = Color::red()   * weight_a +
-                                    Color::green() * weight_b +
-                                    Color::blue()  * weight_c;
+                Color color_debug = interpolate_value(Color::red(), Color::green(), Color::blue());
 
                 // TODO: cull modes
                 // TODO: vertex shader outputs
-                // TODO: wireframe mode
                 // TODO: blending
 
                 bool show_aabb = false;
 
-                bool ccw = abp <= 0 && bcp <= 0 && cap <= 0;
-                bool cw = abp >= 0 && bcp >= 0 && cap >= 0;
+                bool ccw = abp <= 0 &&
+                           bcp <= 0 &&
+                           cap <= 0;
+
+                bool cw = abp >= 0 &&
+                          bcp >= 0 &&
+                          cap >= 0;
+
+                // TODO: wireframe mode
+
+                // bool ccw = (weight_a <= 0.01 && weight_a >= 0) ||
+                //            (weight_b <= 0.01 && weight_b >= 0) ||
+                //            (weight_c <= 0.01 && weight_c >= 0);
+
+                // bool ccw = (abp <= 0 && abp >= -500) ||
+                //            (bcp <= 0 && bcp >= -500) ||
+                //            (cap <= 0 && cap >= -500);
 
                 if (ccw || cw) {
                     // Color color = fs(p);
@@ -212,7 +226,7 @@ public:
 
 private:
     // returns the area of a triangle, which may be negative
-    [[nodiscard]] static constexpr float edge_function(Vec a, Vec b, Vec c) {
+    [[nodiscard]] static constexpr float triangle_signed_area(Vec a, Vec b, Vec c) {
         return (b.x-a.x)*(c.y-a.y) - (b.y-a.y)*(c.x-a.x);
     }
 
