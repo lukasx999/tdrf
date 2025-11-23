@@ -287,7 +287,7 @@ int main() {
                 auto scale = Mat::scale({s, s, s, 1});
                 // BUG: rotation matrix is implicitly scaling
                 auto angle = fmodf((rl::GetTime() * 35), 360);
-                auto rot = Mat::rotate(Vec {1.0f, 1.0f, 0.0f, 1.0f}, deg_to_rad(angle));
+                auto rot = Mat::rotate(Vec {1.0f, 1.0f, 1.0f, 1.0f}, deg_to_rad(angle));
                 return rot * scale * p;
             };
 
