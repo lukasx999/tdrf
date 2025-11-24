@@ -351,6 +351,7 @@ private:
     }
 
     [[nodiscard]] static constexpr Color blend_colors(Color src, Color dest) {
+        // TODO: allow setting custom blend functions
         float factor_src = src.a / 255.0f;
         float factor_dest = 1.0f - factor_src;
         return src * factor_src + dest * factor_dest;
