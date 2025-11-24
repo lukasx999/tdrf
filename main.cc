@@ -258,11 +258,11 @@ int main() {
         // ras.draw_triangle(t1, t2, t3, default_vertex_shader, default_fragment_shader, Color::blue());
 
         auto vs = [](Vec p) {
-            float s = 0.1;
+            float s = 0.5;
             auto scale = Mat::scale({s, s, s, 1});
             // BUG: rotation matrix is implicitly scaling
             auto angle = fmodf((rl::GetTime() * 20), 360);
-            auto rot = Mat::rotate(Vec {1.0f, 0.0f, 0.0f, 1.0f}, deg_to_rad(angle));
+            auto rot = Mat::rotate(Vec {1.0f, 1.0f, 0.0f, 1.0f}, deg_to_rad(angle));
             return rot * scale * p;
         };
 
@@ -270,7 +270,7 @@ int main() {
             return Color::blue();
         };
 
-        ras.render_vertex_buffer(obj_vertices, vs, fs);
+        ras.render_vertex_buffer(cube_vertices, vs, fs);
 
 
         rl_draw_color_buffer(color_buffer, depth_buffer);
