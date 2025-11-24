@@ -237,7 +237,7 @@ int main() {
 
     std::array vertices {
         Vec(0, 0, 0, 1),
-        Vec(1.5, 0, 0, 1),
+        Vec(1.0, 0, 0, 1),
         Vec(0, 0.5, 0, 1),
     };
 

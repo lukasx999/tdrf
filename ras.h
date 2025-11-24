@@ -238,7 +238,7 @@ public:
 
                 // TODO: MSAA
                 // TODO: run rasterizer in parallel
-                // TODO: cull modes
+                // TODO: reconstruct triangles that have a vertex off-screen
                 // TODO: vertex shader outputs
                 // TODO: blending
 
@@ -307,8 +307,8 @@ private:
         aabb.width = std::max({a.x, b.x, c.x});
         aabb.height = std::max({a.y, b.y, c.y});
 
-        assert(aabb.width < m_color_buffer.get_width());
-        assert(aabb.height < m_color_buffer.get_height());
+        assert(aabb.width <= m_color_buffer.get_width());
+        assert(aabb.height <= m_color_buffer.get_height());
 
         return aabb;
     }
