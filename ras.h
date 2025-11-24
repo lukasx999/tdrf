@@ -118,27 +118,28 @@ enum class WindingOrder { Clockwise, CounterClockwise };
 enum class CullMode { Front, Back, None };
 
 class Rasterizer {
-    ColorBuffer m_color_buffer;
-    DepthBuffer m_depth_buffer;
+    const int m_width;
+    const int m_height;
+    ColorBuffer m_color_buffer {m_width, m_height};
+    DepthBuffer m_depth_buffer {m_width, m_height};
     // vertex winding order of front face triangles
     WindingOrder m_winding_order = WindingOrder::CounterClockwise;
     CullMode m_cull_mode = CullMode::None;
 
 public:
-    // TODO: construct buffers inplace
     Rasterizer(int width, int height)
-        : m_color_buffer(width, height)
-        , m_depth_buffer(width, height)
+        : m_width(width)
+        , m_height(height)
     {
         clear();
     }
 
     [[nodiscard]] int get_width() const {
-        return m_color_buffer.get_width();
+        return m_width;
     }
 
     [[nodiscard]] int get_height() const {
-        return m_color_buffer.get_height();
+        return m_height;
     }
 
     [[nodiscard]] Color get_pixel(int x, int y) const {

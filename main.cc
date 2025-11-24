@@ -237,7 +237,7 @@ int main() {
 
     std::array vertices {
         Vec(0, 0, 0, 1),
-        Vec(0.5, 0, 0, 1),
+        Vec(1.5, 0, 0, 1),
         Vec(0, 0.5, 0, 1),
     };
 
@@ -251,9 +251,9 @@ int main() {
         rl::ClearBackground(rl::BLACK);
 
         ras.clear();
-        // ras.draw_triangle(t1, t2, t3, default_vertex_shader, default_fragment_shader, Color::blue());
 
         auto vs = [](Vec p) {
+            return p;
             float s = 0.5;
             auto scale = Mat::scale({s, s, s, 1});
             // BUG: rotation matrix is implicitly scaling
