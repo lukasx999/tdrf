@@ -118,19 +118,31 @@ enum class WindingOrder { Clockwise, CounterClockwise };
 enum class CullMode { Front, Back, None };
 
 class Rasterizer {
-    ColorBuffer& m_color_buffer;
-    DepthBuffer& m_depth_buffer;
+    ColorBuffer m_color_buffer;
+    DepthBuffer m_depth_buffer;
     // vertex winding order of front face triangles
     WindingOrder m_winding_order = WindingOrder::CounterClockwise;
     CullMode m_cull_mode = CullMode::None;
 
 public:
     // TODO: construct buffers inplace
-    Rasterizer(ColorBuffer& color_buffer, DepthBuffer& depth_buffer)
-        : m_color_buffer(color_buffer)
-        , m_depth_buffer(depth_buffer)
+    Rasterizer(int width, int height)
+        : m_color_buffer(width, height)
+        , m_depth_buffer(width, height)
     {
         clear();
+    }
+
+    [[nodiscard]] int get_width() const {
+        return m_color_buffer.get_width();
+    }
+
+    [[nodiscard]] int get_height() const {
+        return m_color_buffer.get_height();
+    }
+
+    [[nodiscard]] Color get_pixel(int x, int y) const {
+        return m_color_buffer.get(x, y);
     }
 
     [[nodiscard]] CullMode get_cull_mode() const {
@@ -301,12 +313,12 @@ private:
     }
 
     [[nodiscard]] bool apply_culling(bool front, bool back) const {
-
         switch (m_cull_mode) {
             using enum CullMode;
-            case Front: return front;
-            case Back: return back;
+            case Front: return back;
+            case Back: return front;
             case None: return front || back;
+            default: assert(!"invalid cull mode");
         }
     }
 
@@ -326,6 +338,8 @@ private:
                 front = ccw;
                 back = cw;
                 break;
+
+            default: assert(!"invalid winding order");
         }
 
         return {front, back};

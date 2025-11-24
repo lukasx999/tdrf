@@ -14,17 +14,17 @@ namespace rl {
 
 namespace {
 
-void write_to_ppm(const char* filename, const ColorBuffer& color_buffer) {
+void write_to_ppm(const char* filename, const Rasterizer& ras) {
     std::ofstream file(filename);
 
     file << "P6" << ' ';
-    file << color_buffer.get_width() << ' ';
-    file << color_buffer.get_height() << ' ';
+    file << ras.get_width() << ' ';
+    file << ras.get_height() << ' ';
     file << 0xff << '\n';
 
-    for (int y = 0; y < color_buffer.get_height(); ++y) {
-        for (int x = 0; x < color_buffer.get_width(); ++x) {
-            auto color = color_buffer.get(x, y);
+    for (int y = 0; y < ras.get_height(); ++y) {
+        for (int x = 0; x < ras.get_width(); ++x) {
+            auto color = ras.get_pixel(x, y);
             file.write(reinterpret_cast<const char*>(&color.r), 1);
             file.write(reinterpret_cast<const char*>(&color.g), 1);
             file.write(reinterpret_cast<const char*>(&color.b), 1);
@@ -157,11 +157,11 @@ void test() {
 
 }
 
-void rl_draw_color_buffer(const ColorBuffer& color_buffer, const DepthBuffer& depth_buffer) {
+void rl_draw_color_buffer(const Rasterizer& ras) {
 
-    for (int y = 0; y < color_buffer.get_height(); ++y) {
-        for (int x = 0; x < color_buffer.get_width(); ++x) {
-            rl::Color c = std::bit_cast<rl::Color>(color_buffer.get(x, y));
+    for (int y = 0; y < ras.get_height(); ++y) {
+        for (int x = 0; x < ras.get_width(); ++x) {
+            rl::Color c = std::bit_cast<rl::Color>(ras.get_pixel(x, y));
 
             // float d = (depth_buffer.get(x, y) + 1) / 2;
             // rl::Color c(d*0xff, d*0xff, d*0xff, 0xff);
@@ -179,11 +179,7 @@ int main() {
 
     int w = 1000;
     int h = w;
-    ColorBuffer color_buffer(w, h);
-    DepthBuffer depth_buffer(w, h);
-    Rasterizer ras(color_buffer, depth_buffer);
-    int width = color_buffer.get_width();
-    int height = color_buffer.get_height();
+    Rasterizer ras(w, h);
 
     auto obj_vertices = load_obj("teapot.obj");
 
@@ -245,10 +241,10 @@ int main() {
         Vec(0, 0.5, 0, 1),
     };
 
-    write_to_ppm("out.ppm", color_buffer);
+    write_to_ppm("out.ppm", ras);
 
     rl::SetConfigFlags(rl::FLAG_WINDOW_RESIZABLE);
-    rl::InitWindow(width, height, "ras");
+    rl::InitWindow(ras.get_width(), ras.get_height(), "ras");
 
     while (!rl::WindowShouldClose()) {
         rl::BeginDrawing();
@@ -273,7 +269,7 @@ int main() {
         ras.render_vertex_buffer(vertices, vs, fs);
 
 
-        rl_draw_color_buffer(color_buffer, depth_buffer);
+        rl_draw_color_buffer(ras);
 
         rl::EndDrawing();
     }
