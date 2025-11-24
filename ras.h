@@ -1,7 +1,9 @@
 #pragma once
 
 #include <ranges>
+#include <memory>
 #include <print>
+#include <unordered_map>
 #include <random>
 #include <vector>
 #include <cstdint>
@@ -268,8 +270,10 @@ public:
                 bool should_render = apply_culling(front, back);
 
                 if (should_render) {
-                    // Color color = fs(p);
-                    m_color_buffer.write(x, y, color_debug);
+                    Color color = fs(p);
+                    Color stored_color = m_color_buffer.get(x, y);
+                    Color result = blend_colors(color, stored_color);
+                    m_color_buffer.write(x, y, result);
                     m_depth_buffer.write(x, y, depth);
 
                 } else if (show_aabb) {
@@ -344,6 +348,12 @@ private:
         }
 
         return {front, back};
+    }
+
+    [[nodiscard]] static constexpr Color blend_colors(Color src, Color dest) {
+        float factor_src = src.a / 255.0f;
+        float factor_dest = 1.0f - factor_src;
+        return src * factor_src + dest * factor_dest;
     }
 
 };

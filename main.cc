@@ -171,6 +171,37 @@ void rl_draw_color_buffer(const Rasterizer& ras) {
     }
 }
 
+void demo_blending(Rasterizer& ras) {
+
+    std::array vertices1 {
+        Vec(0, 0, 0, 1),
+        Vec(0.5, 0, 0, 1),
+        Vec(0, 0.5, 0, 1),
+    };
+
+    std::array vertices2 {
+        Vec(0.2, 0, 0, 1),
+        Vec(0.7, 0, 0, 1),
+        Vec(0.2, 0.5, 0, 1),
+    };
+
+
+    auto vs = [](Vec p) {
+        return p;
+    };
+
+    auto fs1 = [](Vec) {
+        return Color(0x0, 0x0, 0xff, 0xff);
+    };
+
+    auto fs2 = [](Vec) {
+        return Color(0xff, 0x0, 0x0, 0x7f);
+    };
+
+    ras.render_vertex_buffer(vertices1, vs, fs1);
+    ras.render_vertex_buffer(vertices2, vs, fs2);
+}
+
 } // namespace
 
 int main() {
@@ -235,12 +266,6 @@ int main() {
 
     };
 
-    std::array vertices {
-        Vec(0, 0, 0, 1),
-        Vec(1.0, 0, 0, 1),
-        Vec(0, 0.5, 0, 1),
-    };
-
     write_to_ppm("out.ppm", ras);
 
     rl::SetConfigFlags(rl::FLAG_WINDOW_RESIZABLE);
@@ -252,21 +277,23 @@ int main() {
 
         ras.clear();
 
-        auto vs = [](Vec p) {
-            return p;
-            float s = 0.5;
-            auto scale = Mat::scale({s, s, s, 1});
-            // BUG: rotation matrix is implicitly scaling
-            auto angle = fmodf((rl::GetTime() * 30), 360);
-            auto rot = Mat::rotate(Vec {0.0f, 1.0f, 0.0f, 1.0f}, deg_to_rad(angle));
-            return rot * scale * p;
-        };
+        // auto vs = [](Vec p) {
+        //     return p;
+        //     float s = 0.1;
+        //     auto scale = Mat::scale({s, s, s, 1});
+        //     // BUG: rotation matrix is implicitly scaling
+        //     auto angle = fmodf((rl::GetTime() * 30), 360);
+        //     auto rot = Mat::rotate(Vec {0.0f, 1.0f, 0.0f, 1.0f}, deg_to_rad(angle));
+        //     return rot * scale * p;
+        // };
+        //
+        // auto fs = [](Vec) {
+        //     return Color::blue();
+        // };
+        //
+        // ras.render_vertex_buffer(vertices1, vs, fs);
 
-        auto fs = [](Vec) {
-            return Color::blue();
-        };
-
-        ras.render_vertex_buffer(vertices, vs, fs);
+        demo_blending(ras);
 
 
         rl_draw_color_buffer(ras);
