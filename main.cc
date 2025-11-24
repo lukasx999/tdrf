@@ -239,11 +239,11 @@ int main() {
 
     };
 
-    Vec t1(0, 0, 0, 1);
-    Vec t2(0.5, 0, 0, 1);
-    Vec t3(0, 0.5, 0, 1);
-
-
+    std::array vertices {
+        Vec(0, 0, 0, 1),
+        Vec(0.5, 0, 0, 1),
+        Vec(0, 0.5, 0, 1),
+    };
 
     write_to_ppm("out.ppm", color_buffer);
 
@@ -261,8 +261,8 @@ int main() {
             float s = 0.5;
             auto scale = Mat::scale({s, s, s, 1});
             // BUG: rotation matrix is implicitly scaling
-            auto angle = fmodf((rl::GetTime() * 20), 360);
-            auto rot = Mat::rotate(Vec {1.0f, 1.0f, 0.0f, 1.0f}, deg_to_rad(angle));
+            auto angle = fmodf((rl::GetTime() * 30), 360);
+            auto rot = Mat::rotate(Vec {0.0f, 1.0f, 0.0f, 1.0f}, deg_to_rad(angle));
             return rot * scale * p;
         };
 
@@ -270,7 +270,7 @@ int main() {
             return Color::blue();
         };
 
-        ras.render_vertex_buffer(cube_vertices, vs, fs);
+        ras.render_vertex_buffer(vertices, vs, fs);
 
 
         rl_draw_color_buffer(color_buffer, depth_buffer);

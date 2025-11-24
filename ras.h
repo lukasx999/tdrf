@@ -114,9 +114,15 @@ public:
 using ColorBuffer = Buffer<Color>;
 using DepthBuffer = Buffer<float>;
 
+enum class WindingOrder { Clockwise, CounterClockwise };
+enum class CullMode { Front, Back, None };
+
 class Rasterizer {
     ColorBuffer& m_color_buffer;
     DepthBuffer& m_depth_buffer;
+    // vertex winding order of front face triangles
+    WindingOrder m_winding_order = WindingOrder::CounterClockwise;
+    CullMode m_cull_mode = CullMode::None;
 
 public:
     // TODO: construct buffers inplace
@@ -125,6 +131,22 @@ public:
         , m_depth_buffer(depth_buffer)
     {
         clear();
+    }
+
+    [[nodiscard]] CullMode get_cull_mode() const {
+        return m_cull_mode;
+    }
+
+    void set_cull_mode(CullMode cull_mode) {
+        m_cull_mode = cull_mode;
+    }
+
+    [[nodiscard]] WindingOrder get_winding_order() const {
+        return m_winding_order;
+    }
+
+    void set_winding_order(WindingOrder winding_order) {
+        m_winding_order = winding_order;
     }
 
     void clear() {
@@ -209,6 +231,7 @@ public:
 
                 bool show_aabb = false;
 
+                // test if the current pixel is inside of the triangle
                 bool ccw = abp <= 0 &&
                            bcp <= 0 &&
                            cap <= 0;
@@ -227,7 +250,11 @@ public:
                 //            (bcp <= 0 && bcp >= -500) ||
                 //            (cap <= 0 && cap >= -500);
 
-                if (ccw || cw) {
+                auto [front, back] = get_faces_from_winding_order(cw, ccw);
+
+                bool should_render = apply_culling(front, back);
+
+                if (should_render) {
                     // Color color = fs(p);
                     m_color_buffer.write(x, y, color_debug);
                     m_depth_buffer.write(x, y, depth);
@@ -271,6 +298,37 @@ private:
         assert(aabb.height < m_color_buffer.get_height());
 
         return aabb;
+    }
+
+    [[nodiscard]] bool apply_culling(bool front, bool back) const {
+
+        switch (m_cull_mode) {
+            using enum CullMode;
+            case Front: return front;
+            case Back: return back;
+            case None: return front || back;
+        }
+    }
+
+    [[nodiscard]] std::tuple<bool, bool>
+    get_faces_from_winding_order(bool cw, bool ccw) const {
+
+        bool front, back;
+        switch (m_winding_order) {
+            using enum WindingOrder;
+
+            case Clockwise:
+                front = cw;
+                back = ccw;
+                break;
+
+            case CounterClockwise:
+                front = ccw;
+                back = cw;
+                break;
+        }
+
+        return {front, back};
     }
 
 };
