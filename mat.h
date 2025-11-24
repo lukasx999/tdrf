@@ -154,12 +154,13 @@ struct Mat {
         return m;
     }
 
-    [[nodiscard]] static constexpr Mat rotate(Vec r, float angle_radians) {
+    [[nodiscard]] static constexpr Mat rotate(Vec axis, float angle_radians) {
 
         using std::sin;
         using std::cos;
 
         float a = angle_radians;
+        Vec r = axis;
         Mat m;
 
         m.m[0][0] = cos(a) + r.x*r.x * (1.0f-cos(a));
