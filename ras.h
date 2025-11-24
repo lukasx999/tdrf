@@ -1,10 +1,11 @@
 #pragma once
 
-#include <cstdint>
-#include <cassert>
+#include <ranges>
 #include <print>
 #include <random>
 #include <vector>
+#include <cstdint>
+#include <cassert>
 
 #include "math.h"
 
@@ -132,6 +133,20 @@ public:
     }
 
 public:
+    void render_vertex_buffer(std::span<const Vec> vertices, VertexShader vs, FragmentShader fs) {
+
+        assert(vertices.size() % 3 == 0);
+        for (auto&& [idx, verts] : vertices | std::views::chunk(3) | std::views::enumerate) {
+
+            assert(verts.size() == 3);
+            const Vec& a = verts[0];
+            const Vec& b = verts[1];
+            const Vec& c = verts[2];
+
+            draw_triangle(a, b, c, vs, fs);
+        }
+    }
+
     //
     //                (y)
     //                 1 (-z)
@@ -146,7 +161,7 @@ public:
     //             1  -1
     //            (z)(-y)
     //
-    void draw_triangle(Vec a_ndc, Vec b_ndc, Vec c_ndc, VertexShader vs, FragmentShader fs, Color color) {
+    void draw_triangle(Vec a_ndc, Vec b_ndc, Vec c_ndc, VertexShader vs, FragmentShader fs) {
 
         // TODO: clip vertices outside of ndc area, and reconstruct triangle
         // TODO: divide by w
@@ -186,6 +201,8 @@ public:
 
                 Color color_debug = interpolate_value(Color::red(), Color::green(), Color::blue());
 
+                // TODO: MSAA
+                // TODO: run rasterizer in parallel
                 // TODO: cull modes
                 // TODO: vertex shader outputs
                 // TODO: blending
@@ -212,7 +229,7 @@ public:
 
                 if (ccw || cw) {
                     // Color color = fs(p);
-                    m_color_buffer.write(x, y, color);
+                    m_color_buffer.write(x, y, color_debug);
                     m_depth_buffer.write(x, y, depth);
 
                 } else if (show_aabb) {

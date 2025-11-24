@@ -12,10 +12,6 @@ namespace rl {
 #include "math.h"
 #include "ras.h"
 
-struct Triangle {
-    std::array<Vec, 3> vertices;
-};
-
 namespace {
 
 void write_to_ppm(const char* filename, const ColorBuffer& color_buffer) {
@@ -37,11 +33,11 @@ void write_to_ppm(const char* filename, const ColorBuffer& color_buffer) {
 
 }
 
-[[nodiscard]] std::vector<Triangle> load_obj(const char* filename) {
+[[nodiscard]] std::vector<Vec> load_obj(const char* filename) {
     std::ifstream file(filename);
 
     std::vector<Vec> vertices;
-    std::vector<Triangle> faces;
+    std::vector<Vec> vertices_final;
 
     std::string line;
     while (std::getline(file, line)) {
@@ -95,13 +91,15 @@ void write_to_ppm(const char* filename, const ColorBuffer& color_buffer) {
                 int value3;
                 std::from_chars(num3.c_str(), num3.c_str()+num3.size(), value3);
 
-                faces.push_back({ vertices[value1-1], vertices[value2-1], vertices[value3-1] });
+                vertices_final.push_back(vertices[value1-1]);
+                vertices_final.push_back(vertices[value2-1]);
+                vertices_final.push_back(vertices[value3-1]);
 
             } break;
         }
     }
 
-    return faces;
+    return vertices_final;
 }
 
 void test_vector_matrix() {
@@ -187,8 +185,7 @@ int main() {
     int width = color_buffer.get_width();
     int height = color_buffer.get_height();
 
-    // auto teapot_triangles = load_obj("teapot.obj");
-    // auto teapot_triangles_clone(teapot_triangles);
+    auto obj_vertices = load_obj("teapot.obj");
 
     std::array cube_vertices {
 
@@ -257,63 +254,24 @@ int main() {
         rl::BeginDrawing();
         rl::ClearBackground(rl::BLACK);
 
-
-        // for (auto&& [t, t_clone] : std::views::zip(teapot_triangles, teapot_triangles_clone)) {
-        //     float scale = 30;
-        //
-        //     // TODO: fix matrix translation
-        //     auto rot_mat = Mat::rotate({1.0f, 0.0f, 0.0f, 1.0f}, deg_to_rad(rl::GetTime()*50));
-        //     auto scale_mat = Mat::scale({scale, scale, scale, 1.0f});
-        //     auto transf_mat = Mat::translate({width/2.0f, height/2.0f, 0.0f, 1.0f});
-        //     auto mat = transf_mat * scale_mat * rot_mat;
-        //     t.a = mat * t_clone.a;
-        //     t.b = mat * t_clone.b;
-        //     t.c = mat * t_clone.c;
-        //
-        //     ras.draw_triangle(t.a, t.b, t.c, Color::blue());
-        // }
-
         ras.clear();
         // ras.draw_triangle(t1, t2, t3, default_vertex_shader, default_fragment_shader, Color::blue());
 
-        for (auto&& [idx, vertices] : cube_vertices | std::views::chunk(3) | std::views::enumerate) {
+        auto vs = [](Vec p) {
+            float s = 0.1;
+            auto scale = Mat::scale({s, s, s, 1});
+            // BUG: rotation matrix is implicitly scaling
+            auto angle = fmodf((rl::GetTime() * 20), 360);
+            auto rot = Mat::rotate(Vec {1.0f, 0.0f, 0.0f, 1.0f}, deg_to_rad(angle));
+            return rot * scale * p;
+        };
 
-            assert(vertices.size() == 3);
-            const Vec& a = vertices[0];
-            const Vec& b = vertices[1];
-            const Vec& c = vertices[2];
+        auto fs = [](Vec) {
+            return Color::blue();
+        };
 
-            auto vs = [](Vec p) {
-                float s = 0.3;
-                auto scale = Mat::scale({s, s, s, 1});
-                // BUG: rotation matrix is implicitly scaling
-                auto angle = fmodf((rl::GetTime() * 20), 360);
-                auto rot = Mat::rotate(Vec {1.0f, 1.0f, 1.0f, 1.0f}, deg_to_rad(angle));
-                return rot * scale * p;
-            };
+        ras.render_vertex_buffer(obj_vertices, vs, fs);
 
-            std::array colors {
-                Color::red(),
-                Color::red(),
-                Color::green(),
-                Color::green(),
-                Color::blue(),
-                Color::blue(),
-                Color(0x7f, 0x0, 0x0, 0xff),
-                Color(0x7f, 0x0, 0x0, 0xff),
-                Color(0x0, 0x7f, 0x0, 0xff),
-                Color(0x0, 0x7f, 0x0, 0xff),
-                Color(0x0, 0x0, 0x7f, 0xff),
-                Color(0x0, 0x0, 0x7f, 0xff),
-            };
-            Color color = colors[idx];
-
-            auto fs = [](Vec p) {
-                return Color::blue();
-            };
-
-            ras.draw_triangle(a, b, c, vs, fs, color);
-        }
 
         rl_draw_color_buffer(color_buffer, depth_buffer);
 
