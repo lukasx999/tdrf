@@ -214,16 +214,83 @@ public:
 
         auto aabb = get_triangle_aabb(a_vp, b_vp, c_vp);
 
+        // TODO: double buffering
+        // TODO: thread pool
+        // TODO: MSAA
+        // TODO: improve code structure (framebuffer)
+        // TODO: run rasterizer in parallel
+        // TODO: reconstruct triangles that have a vertex off-screen
+        // TODO: vertex shader outputs
+
         for (float x = aabb.x; x < aabb.width; ++x) {
             for (float y = aabb.y; y < aabb.height; ++y) {
-                rasterize_pixel(x, y, a_vp, b_vp, c_vp, fs);
-
+                Vec p { x, y, 0.0f, 1.0f };
+                rasterize_pixel(p, a_vp, b_vp, c_vp, fs);
             }
         }
 
     }
 
 private:
+    void rasterize_pixel(Vec p, Vec a_vp, Vec b_vp, Vec c_vp, FragmentShader fs) {
+
+        float abc = triangle_signed_area(a_vp, b_vp, c_vp);
+        float abp = triangle_signed_area(a_vp, b_vp, p);
+        float bcp = triangle_signed_area(b_vp, c_vp, p);
+        float cap = triangle_signed_area(c_vp, a_vp, p);
+
+        float weight_a = bcp / abc;
+        float weight_b = cap / abc;
+        float weight_c = abp / abc;
+
+        auto interpolate_value = [&]<typename T>(T a, T b, T c) {
+            return a * weight_a + b * weight_b + c * weight_c;
+        };
+
+        float depth = interpolate_value(a_vp.z, b_vp.z, c_vp.z);
+
+        float stored_depth = m_depth_buffer.get(p.x, p.y);
+        if (depth < stored_depth) return;
+
+        Color color_debug = interpolate_value(Color::red(), Color::green(), Color::blue());
+
+        bool show_aabb = false;
+
+        // test if the current pixel is inside of the triangle
+        bool ccw = abp <= 0 &&
+            bcp <= 0 &&
+            cap <= 0;
+
+        bool cw = abp >= 0 &&
+            bcp >= 0 &&
+            cap >= 0;
+
+        // TODO: wireframe mode
+
+        // bool ccw = (weight_a <= 0.01 && weight_a >= 0) ||
+        //            (weight_b <= 0.01 && weight_b >= 0) ||
+        //            (weight_c <= 0.01 && weight_c >= 0);
+
+        // bool ccw = (abp <= 0 && abp >= -500) ||
+        //            (bcp <= 0 && bcp >= -500) ||
+        //            (cap <= 0 && cap >= -500);
+
+        auto [front, back] = get_faces_from_winding_order(cw, ccw);
+
+        bool should_render = apply_culling(front, back);
+
+        if (should_render) {
+            Color color = fs(p);
+            Color stored_color = m_color_buffer.get(p.x, p.y);
+            Color result = blend_colors(color, stored_color);
+            m_color_buffer.write(p.x, p.y, color_debug);
+            m_depth_buffer.write(p.x, p.y, depth);
+
+        } else if (show_aabb) {
+            m_color_buffer.write(p.x, p.y, Color::red());
+        }
+    }
+
     // returns the area of a triangle, which may be negative
     [[nodiscard]] static constexpr float triangle_signed_area(Vec a, Vec b, Vec c) {
         return (b.x-a.x)*(c.y-a.y) - (b.y-a.y)*(c.x-a.x);
@@ -293,73 +360,6 @@ private:
         float factor_src = src.a / 255.0f;
         float factor_dest = 1.0f - factor_src;
         return src * factor_src + dest * factor_dest;
-    }
-
-    void rasterize_pixel(float x, float y, Vec a_vp, Vec b_vp, Vec c_vp, FragmentShader fs) {
-
-        Vec p { x, y, 0.0f, 1.0f };
-
-        float abc = triangle_signed_area(a_vp, b_vp, c_vp);
-        float abp = triangle_signed_area(a_vp, b_vp, p);
-        float bcp = triangle_signed_area(b_vp, c_vp, p);
-        float cap = triangle_signed_area(c_vp, a_vp, p);
-
-        float weight_a = bcp / abc;
-        float weight_b = cap / abc;
-        float weight_c = abp / abc;
-
-        auto interpolate_value = [&]<typename T>(T a, T b, T c) {
-            return a * weight_a + b * weight_b + c * weight_c;
-        };
-
-        float depth = interpolate_value(a_vp.z, b_vp.z, c_vp.z);
-
-        float stored_depth = m_depth_buffer.get(x, y);
-        if (depth < stored_depth) return;
-
-        Color color_debug = interpolate_value(Color::red(), Color::green(), Color::blue());
-
-        // TODO: custom shading lang?
-        // TODO: MSAA
-        // TODO: run rasterizer in parallel
-        // TODO: reconstruct triangles that have a vertex off-screen
-        // TODO: vertex shader outputs
-
-        bool show_aabb = false;
-
-        // test if the current pixel is inside of the triangle
-        bool ccw = abp <= 0 &&
-            bcp <= 0 &&
-            cap <= 0;
-
-        bool cw = abp >= 0 &&
-            bcp >= 0 &&
-            cap >= 0;
-
-        // TODO: wireframe mode
-
-        // bool ccw = (weight_a <= 0.01 && weight_a >= 0) ||
-        //            (weight_b <= 0.01 && weight_b >= 0) ||
-        //            (weight_c <= 0.01 && weight_c >= 0);
-
-        // bool ccw = (abp <= 0 && abp >= -500) ||
-        //            (bcp <= 0 && bcp >= -500) ||
-        //            (cap <= 0 && cap >= -500);
-
-        auto [front, back] = get_faces_from_winding_order(cw, ccw);
-
-        bool should_render = apply_culling(front, back);
-
-        if (should_render) {
-            Color color = fs(p);
-            Color stored_color = m_color_buffer.get(x, y);
-            Color result = blend_colors(color, stored_color);
-            m_color_buffer.write(x, y, color_debug);
-            m_depth_buffer.write(x, y, depth);
-
-        } else if (show_aabb) {
-            m_color_buffer.write(x, y, Color::red());
-        }
     }
 
 };
