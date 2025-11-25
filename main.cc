@@ -197,8 +197,8 @@ void demo_triangle(Rasterizer& ras) {
 
     std::array vertices {
         Vec(0, 0, 0, 1),
-        Vec(0.5, 0, 0, 1),
-        Vec(0, 0.5, 0, 1),
+        Vec(0.9, 0, 0, 1),
+        Vec(0, 0.9, 0, 1),
     };
 
     auto vs = [](Vec p) {
@@ -206,7 +206,7 @@ void demo_triangle(Rasterizer& ras) {
     };
 
     auto fs = [](Vec) {
-        return Color(0x0, 0x0, 0xff, 0xff);
+        return Color::white();
     };
 
     ras.render_vertex_buffer(vertices, vs, fs);
@@ -218,8 +218,8 @@ int main() {
 
     test();
 
-    int w = 500;
-    int h = 500;
+    int w = 100;
+    int h = 100;
     Rasterizer ras(w, h);
 
     std::array cube_vertices {
@@ -277,7 +277,7 @@ int main() {
     write_to_ppm("out.ppm", ras);
 
     rl::SetConfigFlags(rl::FLAG_WINDOW_RESIZABLE);
-    rl::InitWindow(500, 500, "ras");
+    rl::InitWindow(1600, 900, "ras");
 
     while (!rl::WindowShouldClose()) {
         rl::BeginDrawing();
@@ -286,8 +286,8 @@ int main() {
         ras.clear();
 
         // TODO: projection matrix
-        demo_obj(ras, "teapot.obj");
-        // demo_triangle(ras);
+        // demo_obj(ras, "teapot.obj");
+        demo_triangle(ras);
 
         rl_draw_color_buffer(ras);
 
