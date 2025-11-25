@@ -277,23 +277,21 @@ int main() {
 
         ras.clear();
 
-        // auto vs = [](Vec p) {
-        //     return p;
-        //     float s = 0.1;
-        //     auto scale = Mat::scale({s, s, s, 1});
-        //     // BUG: rotation matrix is implicitly scaling
-        //     auto angle = fmodf((rl::GetTime() * 30), 360);
-        //     auto rot = Mat::rotate(Vec {0.0f, 1.0f, 0.0f, 1.0f}, deg_to_rad(angle));
-        //     return rot * scale * p;
-        // };
-        //
-        // auto fs = [](Vec) {
-        //     return Color::blue();
-        // };
-        //
-        // ras.render_vertex_buffer(vertices1, vs, fs);
+        auto vs = [](Vec p) {
+            float s = 0.3;
+            auto scale = Mat::scale({s, s, s, 1});
+            auto angle = fmodf((rl::GetTime() * 30), 360);
+            auto rot = Mat::rotate(Vec {1.0f, 1.0f, 1.0f, 1.0f}, deg_to_rad(angle));
+            return rot * scale * p;
+        };
 
-        demo_blending(ras);
+        auto fs = [](Vec) {
+            return Color::blue();
+        };
+
+        ras.render_vertex_buffer(cube_vertices, vs, fs);
+
+        // demo_blending(ras);
 
 
         rl_draw_color_buffer(ras);

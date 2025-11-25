@@ -273,7 +273,7 @@ public:
                     Color color = fs(p);
                     Color stored_color = m_color_buffer.get(x, y);
                     Color result = blend_colors(color, stored_color);
-                    m_color_buffer.write(x, y, result);
+                    m_color_buffer.write(x, y, color_debug);
                     m_depth_buffer.write(x, y, depth);
 
                 } else if (show_aabb) {

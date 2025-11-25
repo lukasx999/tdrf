@@ -160,7 +160,7 @@ struct Mat {
         using std::cos;
 
         float a = angle_radians;
-        Vec r = axis;
+        Vec r = axis.normalized();
         Mat m;
 
         m.m[0][0] = cos(a) + r.x*r.x * (1.0f-cos(a));

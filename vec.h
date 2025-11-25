@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdexcept>
+#include <format>
 #include <array>
 #include <cmath>
 
@@ -120,4 +121,25 @@ struct Vec {
         return *this * other;
     }
 
+    [[nodiscard]] constexpr float length() const {
+        return std::sqrt(x*x + y*y + z*z);
+    }
+
+    [[nodiscard]] constexpr Vec normalized() const {
+        return {
+            x / length(),
+            y / length(),
+            z / length(),
+            w,
+        };
+    }
+
+};
+
+template <>
+struct std::formatter<Vec> : std::formatter<std::string> {
+    auto format(Vec v, std::format_context& ctx) const {
+        auto fmt = std::format("{{ x={}, y={}, z={}, w={} }}", v.x, v.y, v.z, v.w);;
+        return std::formatter<std::string>::format(fmt, ctx);
+    }
 };
