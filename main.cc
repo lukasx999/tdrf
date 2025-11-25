@@ -208,7 +208,7 @@ int main() {
 
     test();
 
-    int w = 1000;
+    int w = 900;
     int h = w;
     Rasterizer ras(w, h);
 
@@ -278,10 +278,10 @@ int main() {
         ras.clear();
 
         auto vs = [](Vec p) {
-            float s = 0.3;
+            float s = 0.2;
             auto scale = Mat::scale({s, s, s, 1});
             auto angle = fmodf((rl::GetTime() * 30), 360);
-            auto rot = Mat::rotate(Vec {1.0f, 1.0f, 1.0f, 1.0f}, deg_to_rad(angle));
+            auto rot = Mat::rotate(Vec {1.0f, 1.0f, 0.0f, 1.0f}, deg_to_rad(angle));
             return rot * scale * p;
         };
 
@@ -289,12 +289,14 @@ int main() {
             return Color::blue();
         };
 
-        ras.render_vertex_buffer(cube_vertices, vs, fs);
+        ras.render_vertex_buffer(obj_vertices, vs, fs);
 
         // demo_blending(ras);
 
 
         rl_draw_color_buffer(ras);
+
+        rl::DrawFPS(0, 0);
 
         rl::EndDrawing();
     }

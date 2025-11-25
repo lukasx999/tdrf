@@ -238,11 +238,11 @@ public:
 
                 Color color_debug = interpolate_value(Color::red(), Color::green(), Color::blue());
 
+                // TODO: custom shading lang?
                 // TODO: MSAA
                 // TODO: run rasterizer in parallel
                 // TODO: reconstruct triangles that have a vertex off-screen
                 // TODO: vertex shader outputs
-                // TODO: blending
 
                 bool show_aabb = false;
 
