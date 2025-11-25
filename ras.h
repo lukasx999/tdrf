@@ -59,6 +59,23 @@ struct Color {
         };
     }
 
+    constexpr Color& operator+=(Color other) {
+        r += other.r;
+        g += other.g;
+        b += other.b;
+        a += other.a;
+        return *this;
+    }
+
+    constexpr Color operator/(int value) const {
+        return {
+            static_cast<uint8_t>(r / value),
+            static_cast<uint8_t>(g / value),
+            static_cast<uint8_t>(b / value),
+            static_cast<uint8_t>(a / value),
+        };
+    }
+
 };
 
 static_assert(sizeof(Color) == 4);
@@ -234,61 +251,110 @@ public:
 private:
     void rasterize_pixel(Vec p, Vec a_vp, Vec b_vp, Vec c_vp, FragmentShader fs) {
 
-        float abc = triangle_signed_area(a_vp, b_vp, c_vp);
-        float abp = triangle_signed_area(a_vp, b_vp, p);
-        float bcp = triangle_signed_area(b_vp, c_vp, p);
-        float cap = triangle_signed_area(c_vp, a_vp, p);
+        // TODO: fix msaa
+        // int samples = 4;
+        // assert(is_power_of_2(samples));
+        // assert(samples != 2);
 
-        float weight_a = bcp / abc;
-        float weight_b = cap / abc;
-        float weight_c = abp / abc;
+        // std::vector<Color> colors;
+        // for (int i = 1; i <= samples; ++i) {
 
-        auto interpolate_value = [&]<typename T>(T a, T b, T c) {
-            return a * weight_a + b * weight_b + c * weight_c;
-        };
+            // switch (i) {
+            //     case 1:
+            //         p.x = p.x - 0.5;
+            //         p.y = p.y - 0.5;
+            //         break;
+            //     case 2:
+            //         p.x = p.x + 0.5;
+            //         p.y = p.y - 0.5;
+            //         break;
+            //     case 3:
+            //         p.x = p.x - 0.5;
+            //         p.y = p.y + 0.5;
+            //         break;
+            //     case 4:
+            //         p.x = p.x + 0.5;
+            //         p.y = p.y + 0.5;
+            //         break;
+            // }
 
-        float depth = interpolate_value(a_vp.z, b_vp.z, c_vp.z);
+            float abc = triangle_signed_area(a_vp, b_vp, c_vp);
+            float abp = triangle_signed_area(a_vp, b_vp, p);
+            float bcp = triangle_signed_area(b_vp, c_vp, p);
+            float cap = triangle_signed_area(c_vp, a_vp, p);
 
-        float stored_depth = m_depth_buffer.get(p.x, p.y);
-        if (depth < stored_depth) return;
+            float weight_a = bcp / abc;
+            float weight_b = cap / abc;
+            float weight_c = abp / abc;
 
-        Color color_debug = interpolate_value(Color::red(), Color::green(), Color::blue());
+            auto interpolate_value = [&]<typename T>(T a, T b, T c) {
+                return a * weight_a + b * weight_b + c * weight_c;
+            };
 
-        bool show_aabb = false;
+            float depth = interpolate_value(a_vp.z, b_vp.z, c_vp.z);
 
-        // test if the current pixel is inside of the triangle
-        bool ccw = abp <= 0 &&
-            bcp <= 0 &&
-            cap <= 0;
+            float stored_depth = m_depth_buffer.get(p.x, p.y);
+            if (depth < stored_depth) return;
 
-        bool cw = abp >= 0 &&
-            bcp >= 0 &&
-            cap >= 0;
+            Color color_debug = interpolate_value(Color::red(), Color::green(), Color::blue());
 
-        // TODO: wireframe mode
+            bool show_aabb = false;
 
-        // bool ccw = (weight_a <= 0.01 && weight_a >= 0) ||
-        //            (weight_b <= 0.01 && weight_b >= 0) ||
-        //            (weight_c <= 0.01 && weight_c >= 0);
+            // test if the current pixel is inside of the triangle
+            bool ccw = abp <= 0 &&
+                bcp <= 0 &&
+                cap <= 0;
 
-        // bool ccw = (abp <= 0 && abp >= -500) ||
-        //            (bcp <= 0 && bcp >= -500) ||
-        //            (cap <= 0 && cap >= -500);
+            bool cw = abp >= 0 &&
+                bcp >= 0 &&
+                cap >= 0;
 
-        auto [front, back] = get_faces_from_winding_order(cw, ccw);
+            // TODO: wireframe mode
 
-        bool should_render = apply_culling(front, back);
+            // bool ccw = (weight_a <= 0.01 && weight_a >= 0) ||
+            //            (weight_b <= 0.01 && weight_b >= 0) ||
+            //            (weight_c <= 0.01 && weight_c >= 0);
 
-        if (should_render) {
-            Color color = fs(p);
-            Color stored_color = m_color_buffer.get(p.x, p.y);
-            Color result = blend_colors(color, stored_color);
-            m_color_buffer.write(p.x, p.y, result);
-            m_depth_buffer.write(p.x, p.y, depth);
+            // bool ccw = (abp <= 0 && abp >= -500) ||
+            //            (bcp <= 0 && bcp >= -500) ||
+            //            (cap <= 0 && cap >= -500);
 
-        } else if (show_aabb) {
-            m_color_buffer.write(p.x, p.y, Color::red());
-        }
+            auto [front, back] = get_faces_from_winding_order(cw, ccw);
+
+            bool should_render = apply_culling(front, back);
+
+            if (should_render) {
+                Color color = fs(p);
+                Color stored_color = m_color_buffer.get(p.x, p.y);
+                Color result = blend_colors(color, stored_color);
+                m_color_buffer.write(p.x, p.y, color_debug);
+                m_depth_buffer.write(p.x, p.y, depth);
+                // colors.push_back(result);
+
+            } else if (show_aabb) {
+                m_color_buffer.write(p.x, p.y, Color::red());
+
+            }
+            // else {
+            //     colors.push_back(Color(0x0, 0x0, 0x0, 0x0));
+            // }
+
+        // // cant use color struct for summing up color values, due to integer overflow
+        // int r = 0;
+        // int g = 0;
+        // int b = 0;
+        // int a = 0;
+        //
+        // for (auto& color : colors) {
+        //     r += color.r;
+        //     g += color.g;
+        //     b += color.b;
+        //     a += color.a;
+        // }
+        //
+        // Color color(r/samples, g/samples, b/samples, a/samples);
+        // m_color_buffer.write(p.x, p.y, color);
+
     }
 
     // returns the area of a triangle, which may be negative
@@ -360,6 +426,10 @@ private:
         float factor_src = src.a / 255.0f;
         float factor_dest = 1.0f - factor_src;
         return src * factor_src + dest * factor_dest;
+    }
+
+    [[nodiscard]] static constexpr bool is_power_of_2(int value) {
+        return value && !(value & (value-1));
     }
 
 };
