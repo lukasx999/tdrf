@@ -166,40 +166,30 @@ void rl_draw_color_buffer(const Rasterizer& ras) {
             // float d = (depth_buffer.get(x, y) + 1) / 2;
             // rl::Color c(d*0xff, d*0xff, d*0xff, 0xff);
 
-            rl::DrawRectangle(x, y, 1, 1, c);
+            int width = rl::GetScreenWidth() / ras.get_width();
+            int height = rl::GetScreenHeight() / ras.get_height();
+            rl::DrawRectangle(x*width, y*height, width, height, c);
         }
     }
 }
 
-void demo_blending(Rasterizer& ras) {
+void demo_triangle(Rasterizer& ras) {
 
-    std::array vertices1 {
+    std::array vertices {
         Vec(0, 0, 0, 1),
         Vec(0.5, 0, 0, 1),
         Vec(0, 0.5, 0, 1),
     };
 
-    std::array vertices2 {
-        Vec(0.2, 0, 0, 1),
-        Vec(0.7, 0, 0, 1),
-        Vec(0.2, 0.5, 0, 1),
-    };
-
-
     auto vs = [](Vec p) {
         return p;
     };
 
-    auto fs1 = [](Vec) {
+    auto fs = [](Vec) {
         return Color(0x0, 0x0, 0xff, 0xff);
     };
 
-    auto fs2 = [](Vec) {
-        return Color(0xff, 0x0, 0x0, 0x7f);
-    };
-
-    ras.render_vertex_buffer(vertices1, vs, fs1);
-    ras.render_vertex_buffer(vertices2, vs, fs2);
+    ras.render_vertex_buffer(vertices, vs, fs);
 }
 
 } // namespace
@@ -208,7 +198,7 @@ int main() {
 
     test();
 
-    int w = 900;
+    int w = 500;
     int h = w;
     Rasterizer ras(w, h);
 
@@ -269,7 +259,7 @@ int main() {
     write_to_ppm("out.ppm", ras);
 
     rl::SetConfigFlags(rl::FLAG_WINDOW_RESIZABLE);
-    rl::InitWindow(ras.get_width(), ras.get_height(), "ras");
+    rl::InitWindow(1600, 900, "ras");
 
     while (!rl::WindowShouldClose()) {
         rl::BeginDrawing();
@@ -277,21 +267,21 @@ int main() {
 
         ras.clear();
 
-        auto vs = [](Vec p) {
-            float s = 0.2;
-            auto scale = Mat::scale({s, s, s, 1});
-            auto angle = fmodf((rl::GetTime() * 30), 360);
-            auto rot = Mat::rotate(Vec {1.0f, 1.0f, 0.0f, 1.0f}, deg_to_rad(angle));
-            return rot * scale * p;
-        };
+        // auto vs = [](Vec p) {
+        //     float s = 0.2;
+        //     auto scale = Mat::scale({s, s, s, 1});
+        //     auto angle = fmodf((rl::GetTime() * 30), 360);
+        //     auto rot = Mat::rotate(Vec {1.0f, 1.0f, 0.0f, 1.0f}, deg_to_rad(angle));
+        //     return rot * scale * p;
+        // };
+        //
+        // auto fs = [](Vec) {
+        //     return Color::blue();
+        // };
+        //
+        // ras.render_vertex_buffer(obj_vertices, vs, fs);
 
-        auto fs = [](Vec) {
-            return Color::blue();
-        };
-
-        ras.render_vertex_buffer(obj_vertices, vs, fs);
-
-        // demo_blending(ras);
+        demo_triangle(ras);
 
 
         rl_draw_color_buffer(ras);
