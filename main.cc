@@ -303,7 +303,8 @@ int main() {
 
         ras.clear();
 
-        // TODO: projection matrix
+        // TODO: look at matrix
+        // TODO: projection matrix (ortho/persp)
 
         demo_obj(ras, "teapot.obj");
         // demo_triangle(ras);
