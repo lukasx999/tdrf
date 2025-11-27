@@ -4,14 +4,13 @@
 #include <vector>
 #include <ranges>
 #include <array>
+#include <cassert>
 
 namespace rl {
 #include <raylib.h>
 }
 
-#include "math.h"
-#include "ras.h"
-#include "Framebuffer.h"
+#include "tdrf/tdrf.h"
 
 namespace {
 
@@ -294,7 +293,7 @@ int main() {
     write_to_ppm("out.ppm", fb);
 
     rl::SetConfigFlags(rl::FLAG_WINDOW_RESIZABLE);
-    rl::InitWindow(1600, 900, "ras");
+    rl::InitWindow(1600, 900, "tdrf");
 
     while (!rl::WindowShouldClose()) {
         rl::BeginDrawing();
@@ -305,7 +304,7 @@ int main() {
         // TODO: look at matrix
         // TODO: projection matrix (ortho/persp)
 
-        demo_obj(ras, "teapot.obj");
+        demo_obj(ras, "assets/teapot.obj");
         // demo_triangle(ras);
         // demo_cube(ras);
 
