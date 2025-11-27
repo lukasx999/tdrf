@@ -11,20 +11,21 @@ namespace rl {
 
 #include "math.h"
 #include "ras.h"
+#include "Framebuffer.h"
 
 namespace {
 
-void write_to_ppm(const char* filename, const Rasterizer& ras) {
+void write_to_ppm(const char* filename, const Framebuffer& fb) {
     std::ofstream file(filename);
 
     file << "P6" << ' ';
-    file << ras.get_width() << ' ';
-    file << ras.get_height() << ' ';
+    file << fb.get_width() << ' ';
+    file << fb.get_height() << ' ';
     file << 0xff << '\n';
 
-    for (int y = 0; y < ras.get_height(); ++y) {
-        for (int x = 0; x < ras.get_width(); ++x) {
-            auto color = ras.get_pixel(x, y);
+    for (int y = 0; y < fb.get_height(); ++y) {
+        for (int x = 0; x < fb.get_width(); ++x) {
+            auto color = fb.get_color_buffer().get(x, y);
             file.write(reinterpret_cast<const char*>(&color.r), 1);
             file.write(reinterpret_cast<const char*>(&color.g), 1);
             file.write(reinterpret_cast<const char*>(&color.b), 1);
@@ -157,17 +158,17 @@ void test() {
 
 }
 
-void rl_draw_color_buffer(const Rasterizer& ras) {
+void draw_framebuffer_raylib(const Framebuffer& fb) {
 
-    for (int y = 0; y < ras.get_height(); ++y) {
-        for (int x = 0; x < ras.get_width(); ++x) {
-            rl::Color c = std::bit_cast<rl::Color>(ras.get_pixel(x, y));
+    for (int y = 0; y < fb.get_height(); ++y) {
+        for (int x = 0; x < fb.get_width(); ++x) {
+            rl::Color c = std::bit_cast<rl::Color>(fb.get_color_buffer().get(x, y));
 
             // float d = (depth_buffer.get(x, y) + 1) / 2;
             // rl::Color c(d*0xff, d*0xff, d*0xff, 0xff);
 
-            int width = rl::GetScreenWidth() / ras.get_width();
-            int height = rl::GetScreenHeight() / ras.get_height();
+            int width = rl::GetScreenWidth() / fb.get_width();
+            int height = rl::GetScreenHeight() / fb.get_height();
             rl::DrawRectangle(x*width, y*height, width, height, c);
         }
     }
@@ -287,12 +288,10 @@ int main() {
 
     test();
 
-    int w = 700;
-    int h = 700;
-    Rasterizer ras(w, h);
+    Framebuffer fb(1600, 900);
+    Rasterizer ras(fb);
 
-
-    write_to_ppm("out.ppm", ras);
+    write_to_ppm("out.ppm", fb);
 
     rl::SetConfigFlags(rl::FLAG_WINDOW_RESIZABLE);
     rl::InitWindow(1600, 900, "ras");
@@ -301,7 +300,7 @@ int main() {
         rl::BeginDrawing();
         rl::ClearBackground(rl::BLACK);
 
-        ras.clear();
+        fb.clear();
 
         // TODO: look at matrix
         // TODO: projection matrix (ortho/persp)
@@ -310,7 +309,7 @@ int main() {
         // demo_triangle(ras);
         // demo_cube(ras);
 
-        rl_draw_color_buffer(ras);
+        draw_framebuffer_raylib(fb);
 
         rl::DrawFPS(0, 0);
 

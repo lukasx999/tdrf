@@ -3,8 +3,8 @@
 #include <array>
 #include <cmath>
 
-#include "mat.h"
-#include "vec.h"
+#include "Mat.h"
+#include "Vec.h"
 
 [[nodiscard]] inline constexpr float deg_to_rad(float deg) {
     return deg * (M_PI / 180.0);

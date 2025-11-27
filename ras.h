@@ -10,72 +10,12 @@
 #include <cassert>
 
 #include "math.h"
+#include "Color.h"
+#include "Buffer.h"
+#include "Framebuffer.h"
 
 struct Rectangle {
     float x, y, width, height;
-};
-
-struct Color {
-    uint8_t r = 0;
-    uint8_t g = 0;
-    uint8_t b = 0;
-    uint8_t a = 0xff;
-
-    [[nodiscard]] static constexpr Color blue() {
-        return {0x0, 0x0, 0xff, 0xff};
-    }
-
-    [[nodiscard]] static constexpr Color red() {
-        return {0xff, 0x0, 0x0, 0xff};
-    }
-
-    [[nodiscard]] static constexpr Color green() {
-        return {0x0, 0xff, 0x0, 0xff};
-    }
-
-    [[nodiscard]] static constexpr Color black() {
-        return {0x0, 0x0, 0x0, 0xff};
-    }
-
-    [[nodiscard]] static constexpr Color white() {
-        return {0xff, 0xff, 0xff, 0xff};
-    }
-
-    constexpr Color operator*(float value) const {
-        return {
-            static_cast<uint8_t>(r * value),
-            static_cast<uint8_t>(g * value),
-            static_cast<uint8_t>(b * value),
-            static_cast<uint8_t>(a * value),
-        };
-    }
-
-    constexpr Color operator+(Color other) const {
-        return {
-            static_cast<uint8_t>(r + other.r),
-            static_cast<uint8_t>(g + other.g),
-            static_cast<uint8_t>(b + other.b),
-            static_cast<uint8_t>(a + other.a),
-        };
-    }
-
-    constexpr Color& operator+=(Color other) {
-        r += other.r;
-        g += other.g;
-        b += other.b;
-        a += other.a;
-        return *this;
-    }
-
-    constexpr Color operator/(int value) const {
-        return {
-            static_cast<uint8_t>(r / value),
-            static_cast<uint8_t>(g / value),
-            static_cast<uint8_t>(b / value),
-            static_cast<uint8_t>(a / value),
-        };
-    }
-
 };
 
 static_assert(sizeof(Color) == 4);
@@ -91,78 +31,22 @@ using FragmentShader = Color(Vec);
     return Color::blue();
 }
 
-template <typename T>
-class Buffer {
-    const int m_width;
-    const int m_height;
-    std::vector<T> m_buffer;
-
-public:
-    Buffer(int width, int height)
-        : m_width(width)
-        , m_height(height)
-        , m_buffer(m_width * m_height)
-    { }
-
-    void write(int x, int y, T value) {
-        m_buffer[y * m_width + x] = value;
-    }
-
-    [[nodiscard]] T get(int x, int y) const {
-        return m_buffer[y * m_width + x];
-    }
-
-    void clear(T value) {
-        for (int x = 0; x < get_width(); ++x) {
-            for (int y = 0; y < get_height(); ++y) {
-                write(x, y, value);
-            }
-        }
-    }
-
-    [[nodiscard]] int get_width() const {
-        return m_width;
-    }
-
-    [[nodiscard]] int get_height() const {
-        return m_height;
-    }
-
-};
-
-using ColorBuffer = Buffer<Color>;
-using DepthBuffer = Buffer<float>;
-
 enum class WindingOrder { Clockwise, CounterClockwise };
 enum class CullMode { Front, Back, None };
 
 class Rasterizer {
-    const int m_width;
-    const int m_height;
-    ColorBuffer m_color_buffer {m_width, m_height};
-    DepthBuffer m_depth_buffer {m_width, m_height};
+    Framebuffer& m_framebuffer;
     // vertex winding order of front face triangles
     WindingOrder m_winding_order = WindingOrder::CounterClockwise;
     CullMode m_cull_mode = CullMode::None;
 
 public:
-    Rasterizer(int width, int height)
-        : m_width(width)
-        , m_height(height)
-    {
-        clear();
+    explicit Rasterizer(Framebuffer& framebuffer) : m_framebuffer(framebuffer) {
+        m_framebuffer.clear();
     }
 
-    [[nodiscard]] int get_width() const {
-        return m_width;
-    }
-
-    [[nodiscard]] int get_height() const {
-        return m_height;
-    }
-
-    [[nodiscard]] Color get_pixel(int x, int y) const {
-        return m_color_buffer.get(x, y);
+    [[nodiscard]] Framebuffer& get_framebuffer() const {
+        return m_framebuffer;
     }
 
     [[nodiscard]] CullMode get_cull_mode() const {
@@ -179,11 +63,6 @@ public:
 
     void set_winding_order(WindingOrder winding_order) {
         m_winding_order = winding_order;
-    }
-
-    void clear() {
-        m_color_buffer.clear(Color::black());
-        m_depth_buffer.clear(-1.0f);
     }
 
 public:
@@ -293,7 +172,7 @@ private:
 
             float depth = interpolate_value(a_vp.z, b_vp.z, c_vp.z);
 
-            float stored_depth = m_depth_buffer.get(p.x, p.y);
+            float stored_depth = m_framebuffer.get_depth_buffer().get(p.x, p.y);
             if (depth < stored_depth) return;
 
             Color color_debug = interpolate_value(Color::red(), Color::green(), Color::blue());
@@ -325,14 +204,14 @@ private:
 
             if (should_render) {
                 Color color = fs(p);
-                Color stored_color = m_color_buffer.get(p.x, p.y);
+                Color stored_color = m_framebuffer.get_color_buffer().get(p.x, p.y);
                 Color result = blend_colors(color, stored_color);
-                m_color_buffer.write(p.x, p.y, color_debug);
-                m_depth_buffer.write(p.x, p.y, depth);
+                m_framebuffer.get_color_buffer().write(p.x, p.y, color_debug);
+                m_framebuffer.get_depth_buffer().write(p.x, p.y, depth);
                 // colors.push_back(result);
 
             } else if (show_aabb) {
-                m_color_buffer.write(p.x, p.y, Color::red());
+                m_framebuffer.get_color_buffer().write(p.x, p.y, Color::red());
 
             }
             // else {
@@ -365,8 +244,8 @@ private:
     // transforms coordinates from NDC to the actual viewport
     [[nodiscard]] Vec viewport_transform(Vec v) const {
         return {
-            ((v.x + 1) / 2) * m_color_buffer.get_width(),
-            (-(v.y - 1) / 2) * m_color_buffer.get_height(),
+            ((v.x + 1) / 2) * m_framebuffer.get_width(),
+            (-(v.y - 1) / 2) * m_framebuffer.get_height(),
             v.z,
             v.w
         };
@@ -382,8 +261,8 @@ private:
         aabb.width = std::max({a.x, b.x, c.x});
         aabb.height = std::max({a.y, b.y, c.y});
 
-        assert(aabb.width <= m_color_buffer.get_width());
-        assert(aabb.height <= m_color_buffer.get_height());
+        assert(aabb.width <= m_framebuffer.get_width());
+        assert(aabb.height <= m_framebuffer.get_height());
 
         return aabb;
     }
