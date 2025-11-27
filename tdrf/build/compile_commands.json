@@ -1,8 +1,0 @@
-[
-{
-  "directory": "/home/lukas/code/repos/ras/tdrf/build",
-  "command": "/usr/bin/clang++ -std=gnu++23 -fcolor-diagnostics -Wall -Wextra -O3 -ggdb -o CMakeFiles/tdrf.dir/Rasterizer.cc.o -c /home/lukas/code/repos/ras/tdrf/Rasterizer.cc",
-  "file": "/home/lukas/code/repos/ras/tdrf/Rasterizer.cc",
-  "output": "/home/lukas/code/repos/ras/tdrf/build/CMakeFiles/tdrf.dir/Rasterizer.cc.o"
-}
-]

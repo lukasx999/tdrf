@@ -1,3 +1,0 @@
-/home/lukas/code/repos/ras/tdrf/build/CMakeFiles/tdrf.dir
-/home/lukas/code/repos/ras/tdrf/build/CMakeFiles/edit_cache.dir
-/home/lukas/code/repos/ras/tdrf/build/CMakeFiles/rebuild_cache.dir
