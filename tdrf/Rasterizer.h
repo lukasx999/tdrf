@@ -4,9 +4,7 @@
 #include <ranges>
 
 #include "Vec.h"
-#include "Mat.h"
 #include "Color.h"
-#include "Buffer.h"
 #include "Framebuffer.h"
 #include "types.h"
 
